@@ -44,25 +44,42 @@ function comicTitle(spare,word,txt){
  if(!spare)o+=star(36,40,15)+star(70,18,9)+star(356,262,14)+star(330,284,8)+star(370,36,10);
  const words=txt.split(/\s+/);let sz=20,lines=[];
  for(;;){const per=Math.floor((spare?230:210)/(sz*.56));lines=[];let cur='';words.forEach(wd=>{if(cur&&(cur+' '+wd).length>per){lines.push(cur);cur=wd}else cur=cur?cur+' '+wd:wd});lines.push(cur);if(lines.length<=3||sz<=13)break;sz--}
- const lh=sz*1.2,ty=138-(lines.length-1)*lh*.45,esc=l=>l.replace(/&/g,'&amp;').replace(/</g,'&lt;'),tc=spare?'#ff7a1a':'#ffe04a';
+ const lh=sz*1.2,ty=spare?150-(lines.length-1)*lh*.5:138-(lines.length-1)*lh*.45,esc=l=>l.replace(/&/g,'&amp;').replace(/</g,'&lt;'),tc=spare?'#ff7a1a':'#ffe04a';
  o+='<g transform="translate(200 '+ty.toFixed(1)+') rotate(-6) skewX(-8)"><text x="4" y="5" style="font-size:60px;fill:#14100a;stroke:#14100a;stroke-width:11px">'+word+'</text><text x="0" y="0" style="font-size:60px;fill:'+tc+';stroke:#14100a;stroke-width:7px">'+word+'</text></g>';
- o+=lines.map((l,i)=>'<text x="200" y="'+(ty+38+i*lh).toFixed(1)+'" style="font:700 '+sz+'px \'Space Grotesk\',Arial,sans-serif;fill:#14100a;stroke:none;text-anchor:middle">'+esc(l)+'</text>').join('');
+ o+=lines.map((l,i)=>'<text x="200" y="'+(ty+(spare?42:38)+i*lh).toFixed(1)+'" style="font:700 '+sz+'px \'Space Grotesk\',Arial,sans-serif;fill:#14100a;stroke:none;text-anchor:middle">'+esc(l)+'</text>').join('');
  const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 400 300');
  s.style.cssText='left:50%;top:50%;--w:'+(spare?90:94)+'%;--r:-2deg';s.innerHTML=o;powEl.appendChild(s);lwEl.classList.remove('shake');void lwEl.offsetWidth;lwEl.classList.add('shake')}
 let bid=0;
+const mctx=document.createElement('canvas').getContext('2d');
+/* Text in die Ellipse der Blase einpassen: echte Breiten messen, pro Zeile die verfügbare Breite aus der Ellipse berechnen */
+function fitBubble(words,title){
+ const CX=100,CY=70,RX=86,RY=57,TH=title?26:0,ew=(y0,y1)=>{const d=Math.max(Math.abs(y0-CY),Math.abs(y1-CY));return d>=RY?0:2*RX*Math.sqrt(1-(d/RY)*(d/RY))};
+ for(let sz=15;sz>=10;sz-=.5){
+  mctx.font='700 '+sz+'px "Space Grotesk",Arial,sans-serif';const wsp=mctx.measureText(' ').width,W=w=>mctx.measureText(w).width,lh=sz*1.18;
+  for(let n=1;n<=6;n++){
+   const top=CY-(n*lh+TH)/2;if(title){mctx.font='22px "Bowlby One","Arial Black",sans-serif';const tw=mctx.measureText(title).width;mctx.font='700 '+sz+'px "Space Grotesk",Arial,sans-serif';if(tw>ew(top,top+TH))continue}
+   const lines=[];let cur='',i=0,ok=true;
+   for(const wd of words){
+    const y=top+TH+i*lh,max=ew(y,y+lh);
+    if(W(wd)>max){ok=false;break}
+    if(cur&&W(cur)+wsp+W(wd)>max){lines.push(cur);cur=wd;i++;if(i>=n){ok=false;break}const y2=top+TH+i*lh;if(W(wd)>ew(y2,y2+lh)){ok=false;break}}
+    else cur=cur?cur+' '+wd:wd}
+   if(ok&&i<n){if(cur)lines.push(cur);return{sz,lh,lines,top,TH}}
+  }
+ }
+ const sz=10,lh=11.8,lines=words.join(' ').match(/.{1,26}(\s|$)/g).map(l=>l.trim());return{sz,lh,lines,top:70-(lines.length*lh+TH)/2,TH}
+}
 function comicBubble(title,txt,top,wd,pop){
- const id='y'+(++bid),words=txt.split(/\s+/),mx=Math.max(...words.map(s=>s.length));let sz=Math.min(16,Math.floor(132/(Math.max(mx,8)*.58))),lines=[];
- for(;;){const per=Math.max(mx,Math.floor(132/(sz*.58)));lines=[];let cur='';words.forEach(wd=>{if(cur&&(cur+' '+wd).length>per){lines.push(cur);cur=wd}else cur=cur?cur+' '+wd:wd});lines.push(cur);if(lines.length*sz*1.2+(title?26:0)<=104||sz<=10)break;sz--}
- const lh=sz*1.2,th=title?26:0,y0=68-(lines.length*lh+th)/2,esc=l=>l.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+ const id='y'+(++bid),words=txt.split(/\s+/).filter(Boolean),f=fitBubble(words,title),esc=l=>l.replace(/&/g,'&amp;').replace(/</g,'&lt;');
  const body='M100 8C150 8 192 34 192 70C192 106 150 132 108 132C96 132 86 131 76 129L44 160L56 124C26 114 8 94 8 70C8 34 50 8 100 8Z';
  const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 200 170');
- if(!pop)s.classList.add('soft');s.style.cssText='left:50%;top:'+(top||50)+'%;--w:'+(wd||80)+'%;--r:-3deg';
- s.innerHTML='<defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc16b"/><stop offset="1" stop-color="#ff8f2e"/></linearGradient></defs>'
+ if(!pop)s.classList.add('soft');s.style.cssText='left:50%;top:'+(top||50)+'%;--w:'+(wd||84)+'%;--r:-1.5deg';
+ s.innerHTML='<defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd79a"/><stop offset="1" stop-color="#ffab55"/></linearGradient></defs>'
   +'<path d="'+body+'" transform="translate(4 5)" fill="#14100a" stroke="#14100a" stroke-width="4" stroke-linejoin="round"/>'
   +'<path d="'+body+'" fill="url(#g'+id+')" stroke="#14100a" stroke-width="4" stroke-linejoin="round"/>'
-  +'<path d="M36 52C46 32 70 22 96 20" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="5" stroke-linecap="round"/><circle cx="26" cy="68" r="3" fill="#fff" fill-opacity=".75"/>'
-  +(title?'<text x="100" y="'+(y0+20).toFixed(1)+'" style="font-size:22px;fill:#14100a;stroke:none">'+esc(title)+'</text>':'')
-  +lines.map((l,i)=>'<text x="100" y="'+(y0+th+i*lh+sz*.85).toFixed(1)+'" style="font:700 '+sz+'px \'Space Grotesk\',Arial,sans-serif;fill:#14100a;stroke:none;text-anchor:middle">'+esc(l)+'</text>').join('');
+  +'<path d="M22 56C27 38 42 24 62 17" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="3.5" stroke-linecap="round"/>'
+  +(title?'<text x="100" y="'+(f.top+20).toFixed(1)+'" style="font-size:22px;fill:#14100a;stroke:none">'+esc(title)+'</text>':'')
+  +f.lines.map((l,i)=>'<text x="100" y="'+(f.top+f.TH+i*f.lh+f.sz*.88).toFixed(1)+'" style="font:700 '+f.sz+'px \'Space Grotesk\',Arial,sans-serif;fill:#14100a;stroke:none;text-anchor:middle">'+esc(l)+'</text>').join('');
  powEl.appendChild(s)}
 function showToast(a,b){toast.firstChild.textContent=a;toast.lastChild.textContent=b;toast.classList.add('on')}
 function rack(){pins=[];[[4,70],[3,94],[2,118],[1,142]].forEach(([n,y])=>{for(let i=0;i<n;i++)pins.push({x:180+(i-(n-1)/2)*26,y,vx:0,vy:0,r:0,vr:0,d:false,oy:0,k:(n===4&&(i===0||i===3))?R(.3,.8):(n===3&&(i===0||i===2))?R(.5,.9):1})})}
