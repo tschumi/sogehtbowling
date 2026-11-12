@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hoppi Galoppi Solutions Bowling Team</title>
+<link rel="preload" href="assets/fonts/BowlbyOne-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/fonts/SpaceGrotesk-VariableFont_wght.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/fonts/Yellowtail-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<meta name="description" content="Hoppi Galoppi Solutions: das Hobby-Bowlingteam mit Feenstaub. Seit 2017 an den Turnieren der BZ Ost.">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/styles.css">
+<script>if(!matchMedia('(prefers-reduced-motion:reduce)').matches)document.documentElement.classList.add('lane-off')</script>
+</head>
+<body>
+<header class="nav"><div class="bar">
+<a class="brand" href="#top">Hoppi Galoppi Solutions</a>
+<nav><a href="#team">Team</a><a href="#turnier">Turnier</a><a href="#geschichte">Geschichte</a></nav>
+</div></header>
+<main id="top">
+<section class="hero"><div class="hg">
+<div class="lc">
+<h1 class="logo"><img src="assets/logo.svg" alt="Hoppi Galoppi Solutions. Bowling with fairy dust since 2017." width="540" height="413"></h1>
+<p class="tag"><em>So geht Bowling!</em></p>
+<div class="playwrap"><button class="playbtn" type="button">Bowling spielen</button></div>
+
+</div>
+<div class="monitor">
+<button class="xbtn" type="button" aria-label="Spiel schliessen">×</button>
+<div class="board"><div><b id="sT">1</b>Runde</div><div><b id="sP">0</b>Pins</div><div><b id="sS">0</b>Strikes</div><div><b id="sR">0</b>Spares</div><div><b id="sG">0</b>Rinnen</div></div>
+<div class="lw"><canvas id="lane" tabindex="0" role="button" aria-label="Bowlingbahn: Tippen oder klicken zum Werfen. Mit der Tastatur: Pfeiltasten zum Zielen, Enter halten und loslassen zum Werfen."></canvas><div id="pow" class="pow" aria-hidden="true"></div><div id="toast" class="toast" role="status"><b></b><span></span></div></div>
+<div class="pw"><span class="lbl">Stärke</span><div class="bar"><i id="pf"></i><b id="pv"></b></div><span class="dots" role="img" aria-label="Wurf in dieser Runde"><i class="on"></i><i></i></span></div>
+<p class="hint"><span class="hl">Zielen: Dorthin drücken, wo die Kugel hin soll. Halten baut Wucht auf, Loslassen wirft. Mehr Wucht räumt mehr ab, streut aber auch mehr.</span><span class="hs">Tippen zum Zielen, halten für Wucht, loslassen zum Werfen.</span></p>
+</div>
+</div><a class="scroll" href="#team" aria-label="Weiter zum Team">Zum Team<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a></section>
+
+<section id="team"><div class="wrap">
+<h2>Das Team</h2>
+<p class="sub" id="teamSub"></p>
+<div class="team" id="teamList"></div>
+</div></section>
+
+<section id="turnier" class="turnier"><div class="wrap">
+<h2>Nächstes Turnier</h2>
+<p class="sub" id="turnierText"></p>
+<div class="cd" role="timer" aria-live="off"><div><b id="cdD">00</b><small>Tage</small></div><div><b id="cdH">00</b><small>Stunden</small></div><div><b id="cdM">00</b><small>Minuten</small></div><div><b id="cdS">00</b><small>Sekunden</small></div></div>
+<p id="cdmsg"></p>
+</div></section>
+
+<section id="geschichte"><div class="wrap">
+<h2>Geschichte</h2>
+<p class="sub" id="histSub"></p>
+<div class="stats" id="stats"></div>
+<ol class="hist" id="hist"></ol>
+</div></section>
+</main>
+<footer><div>Made with love and fairy dust in <svg viewBox="0 0 32 32" width="15" height="15" role="img" aria-label="Schweiz" style="vertical-align:-2px;margin:0 1px"><rect width="32" height="32" rx="3" fill="#d52b1e"/><path d="M13 6h6v7h7v6h-7v7h-6v-7H6v-6h7z" fill="#fff"/></svg></div><div>© 2026 sogehtbowling.ch</div></footer>
+
+<script src="js/site.js" defer></script>
+<script src="js/game.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,312 @@
+{
+  "_hinweis": "Inhalte der Website. Nach dem Ändern speichern, die Seite aktualisiert sich nach dem nächsten Veröffentlichen. Texte in Anführungszeichen lassen, Kommas zwischen Einträgen nicht vergessen.",
+  "turnier": {
+    "datum": "2027-03-13T10:00:00",
+    "text": "Samstag, 13. März 2027, 10:00 Uhr. Bis dahin: Kugeln polieren, Feenstaub nachfüllen.",
+    "meldung_weit": "Noch genug Zeit, um die Wurftechnik komplett zu ignorieren.",
+    "meldung_nah": "Jetzt wird’s ernst. Wirklich. Fast.",
+    "meldung_heute": "Heute ist Turniertag! Los geht’s!",
+    "meldung_vorbei": "Das Turnier ist vorbei. Nicht nur die Kugeln müssen sich nun ausruhen."
+  },
+  "team_untertitel": "Technik: Feenstaub. Trefferquote: Verhandlungssache.",
+  "team": [
+    {
+      "name": "Rainy",
+      "rolle": "Der Capt’n",
+      "text": "Trägt die Verantwortung und sorgt für die gute Laune.",
+      "kugel": [
+        "#ffb066",
+        "#ff7a1a",
+        "#a84300"
+      ]
+    },
+    {
+      "name": "Schnöfe",
+      "rolle": "Der Zuversichtliche",
+      "text": "Glaubt vor jedem Wurf an den Strike. Die Pins sehen das anders.",
+      "kugel": [
+        "#ff7b7f",
+        "#e0383e",
+        "#7d1218"
+      ]
+    },
+    {
+      "name": "Sven",
+      "rolle": "Der Glückspilz",
+      "text": "Vertraut auf sein Glück, zwischendurch sogar zu Recht.",
+      "kugel": [
+        "#7fb4ff",
+        "#2f6fe0",
+        "#14357d"
+      ]
+    },
+    {
+      "name": "Tschumi",
+      "rolle": "Der Taktiker",
+      "text": "Plant die Wurflinie, bis die Bahn schliesst.",
+      "kugel": [
+        "#6fe0d2",
+        "#1fa79a",
+        "#0b5a52"
+      ]
+    }
+  ],
+  "geschichte": {
+    "untertitel": "Seit 2017 an den Turnieren der BZ Ost, mit einem Covid-Unterbruch und einem erstaunlich stabilen Mittelfeld.",
+    "zahlen": [
+      {
+        "wert": "9 Jahre",
+        "text": "seit dem ersten Turnier 2017"
+      },
+      {
+        "wert": "7 Turniere",
+        "text": "bisher gespielt"
+      },
+      {
+        "wert": "Rang 3",
+        "text": "Bestresultat, 2017"
+      },
+      {
+        "wert": "3 Jahre",
+        "text": "Zwangspause wegen Covid"
+      }
+    ],
+    "eintraege": [
+      {
+        "rang": 7,
+        "liga": "Europa League",
+        "datum": "Samstag, 21. März 2026",
+        "turnier_nr": 20,
+        "witz": "Ein Rang, der nach Zukunft aussieht."
+      },
+      {
+        "rang": 4,
+        "liga": "Europa League",
+        "datum": "Samstag, 15. März 2025",
+        "turnier_nr": 19,
+        "witz": "Knapp am Podest vorbei. Der Pin war schuld."
+      },
+      {
+        "rang": 4,
+        "liga": "Challenge League",
+        "datum": "Samstag, 16. März 2024",
+        "turnier_nr": 18,
+        "witz": "Wieder ganz vorne dabei, fast."
+      },
+      {
+        "rang": 7,
+        "liga": "Champions League",
+        "datum": "Samstag, 18. März 2023",
+        "turnier_nr": 17,
+        "witz": "Comeback nach drei Jahren. Die Kugeln waren eingerostet, die Laune nicht."
+      },
+      {
+        "typ": "pause",
+        "label": "Pause",
+        "titel": "Unterbruch durch Covid",
+        "datum": "Donnerstag, 30. Januar 2020",
+        "text": "Aufgrund der Bedrohungslage durch Covid-19 konnten drei Jahre lang keine Turniere stattfinden.",
+        "witz": "Die Kugeln haben sich drei Jahre lang gelangweilt."
+      },
+      {
+        "rang": 9,
+        "liga": "Challenge League",
+        "datum": "Samstag, 23. März 2019",
+        "turnier_nr": 14,
+        "witz": "Man muss anderen auch mal den Vortritt lassen."
+      },
+      {
+        "rang": 5,
+        "liga": "Challenge League",
+        "datum": "Samstag, 24. März 2018",
+        "turnier_nr": 13,
+        "witz": "Solide Mitte, stabil wie ein Pin."
+      },
+      {
+        "rang": 3,
+        "liga": "Challenge League",
+        "datum": "Samstag, 18. März 2017",
+        "turnier_nr": 12,
+        "witz": "Das Podest. Seither wird es bei jedem Turnier erwähnt."
+      },
+      {
+        "typ": "gruendung",
+        "label": "2016",
+        "titel": "Gründung",
+        "datum": "Donnerstag, 25. August 2016",
+        "text": "Unser Capt’n meldet das Team erstmals offiziell an das Bowlingturnier der BZ Ost an.",
+        "witz": "Und damit nahm das Unheil seinen Lauf."
+      }
+    ]
+  },
+  "sprueche": {
+    "strike": {
+      "any": [
+        "Strike! So geht Bowling!",
+        "Strike! So geht Bowling... Punkt.. ch!",
+        "Strike! Rainy meldet es sofort dem Turnierleiter."
+      ],
+      "schnell": [
+        "Vollgas! Die Pins hatten keine Chance.",
+        "Strike! Hat die Wand gehalten?"
+      ],
+      "sanft": [
+        "Strike im Schritttempo. Die Pins sind freiwillig aus langeweile umgefallen."
+      ]
+    },
+    "rinne1": {
+      "any": [
+        "Der Feenstaub war wohl leer.",
+        "Rinne. Die Bahn war schuld.",
+        "Direkt in die Rinne. Sehr mutig."
+      ],
+      "schnell": [
+        "Viel Tempo, wenig Richtung. Rinne."
+      ],
+      "sanft": [
+        "Sanft in die Rinne gerollt. Wenigstens elegant."
+      ]
+    },
+    "luft1": {
+      "any": [
+        "Nichts getroffen. Die Pins bleiben stehen und lachen.",
+        "Kein Treffer. Die Pins feiern ihre Standhaftigkeit.",
+        "Ein Spare ist noch möglich."
+      ],
+      "schnell": [
+        "Schnell, aber komplett daneben. Geschwindigkeit ist nicht alles."
+      ],
+      "sanft": [
+        "Zu sanft. Die Kugel hat die Pins nur von weitem gegrüsst."
+      ]
+    },
+    "wenig1": {
+      "any": [
+        "Ein Spare ist noch möglich.",
+        "Ein paar Pins sind gefallen. Der zweite Wurf macht es bestimmt besser."
+      ],
+      "schnell": [
+        "Wucht ist nicht alles. Ein Spare ist noch drin."
+      ],
+      "sanft": [
+        "Mit etwas mehr Schwung ist da noch was drin."
+      ]
+    },
+    "mittel1": {
+      "any": [
+        "Solide Mitte. Noch ist alles möglich.",
+        "Anständig. Die Pins diskutieren noch."
+      ],
+      "schnell": [
+        "Schnell, aber nur die Hälfte. Geschwindigkeit ist nicht alles."
+      ],
+      "sanft": [
+        "Sanft, aber immerhin ein paar Pins. Jetzt etwas Mut."
+      ]
+    },
+    "mitte1": {
+      "any": [
+        "Ab durch die Mitte. Die Aussenpins warten gespannt auf den zweiten Wurf.",
+        "Die Mitte ist frei."
+      ]
+    },
+    "viel1": {
+      "any": [
+        "Fast aufgeräumt. Nur noch {rest} übrig, das Spare liegt bereit."
+      ],
+      "schnell": [
+        "Mit Wucht fast alles abgeräumt. Nur noch {rest} übrig."
+      ],
+      "sanft": [
+        "Sanft und trotzdem fast alles. Nur noch {rest} übrig."
+      ]
+    },
+    "neun1": {
+      "any": [
+        "So knapp. Der letzte Pin hat sich gewehrt.",
+        "Nur noch einer übrig. Der Spare ist fast geschenkt."
+      ],
+      "schnell": [
+        "Voller Einsatz, aber einer hat sich versteckt."
+      ],
+      "sanft": [
+        "Ganz sanft, aber einer ist stehen geblieben."
+      ]
+    },
+    "spare": {
+      "any": [
+        "Spare! So geht Bowling!",
+        "Spare! Geht doch.",
+        "Spare. Die letzten Pins hatten keine Chance."
+      ],
+      "schnell": [
+        "Spare mit Tempo. Das haben die Pins nicht kommen sehen."
+      ],
+      "sanft": [
+        "Spare, ganz sanft. Der letzte Pin ist fast freiwillig gefallen."
+      ]
+    },
+    "rinne2": {
+      "any": [
+        "Rinne im zweiten Wurf. Das Spare ist weg.",
+        "Die Rinne hat den Rest erledigt."
+      ],
+      "schnell": [
+        "Zu viel Tempo, zu wenig Bahn. Das Spare ist weg."
+      ]
+    },
+    "luft2": {
+      "any": [
+        "Kein Spare. Die Restpins bleiben standhaft.",
+        "Leider daneben. Die Restpins lachen.",
+        "War was?"
+      ],
+      "schnell": [
+        "Geschwindigkeit ist nicht alles. Die Restpins stehen noch."
+      ],
+      "sanft": [
+        "Zu sanft für die Restpins. Die stehen noch."
+      ]
+    },
+    "knapp2": {
+      "any": [
+        "Nur noch einer übrig. Vielleicht beim nächsten Mal.",
+        "So knapp. Der letzte Pin bleibt trotzig stehen."
+      ],
+      "schnell": [
+        "Voller Einsatz, aber der letzte Pin bleibt stehen."
+      ],
+      "sanft": [
+        "Sanft versucht, einer steht noch."
+      ]
+    },
+    "rest2gut": {
+      "any": [
+        "Starke Runde. Nur noch {rest} übrig."
+      ],
+      "schnell": [
+        "Mit Tempo aufgeräumt, aber {rest} stehen noch."
+      ]
+    },
+    "rest2mittel": {
+      "any": [
+        "Solide. Jeder Pin zählt. {rest} stehen noch."
+      ],
+      "schnell": [
+        "Geschwindigkeit ist nicht alles. {rest} stehen noch."
+      ],
+      "sanft": [
+        "Sanft aufgeräumt. {rest} stehen noch."
+      ]
+    },
+    "rest2schwach": {
+      "any": [
+        "Immerhin ein paar Pins. {rest} stehen noch.",
+        "Das war nicht die Runde des Jahres."
+      ],
+      "schnell": [
+        "Viel Wucht, wenig Pins. {rest} stehen noch."
+      ]
+    }
+  }
+}
