@@ -45,8 +45,8 @@ function comicTitle(spare,word,txt){
  const words=txt.split(/\s+/);let sz=20,lines=[];
  for(;;){const per=Math.floor((spare?230:210)/(sz*.56));lines=[];let cur='';words.forEach(wd=>{if(cur&&(cur+' '+wd).length>per){lines.push(cur);cur=wd}else cur=cur?cur+' '+wd:wd});lines.push(cur);if(lines.length<=3||sz<=13)break;sz--}
  const lh=sz*1.2,ty=spare?150-(lines.length-1)*lh*.5:138-(lines.length-1)*lh*.45,esc=l=>l.replace(/&/g,'&amp;').replace(/</g,'&lt;'),tc=spare?'#ff7a1a':'#ffe04a';
- o+='<g transform="translate(200 '+ty.toFixed(1)+') rotate(-6) skewX(-8)"><text x="4" y="5" style="font-size:60px;fill:#14100a;stroke:#14100a;stroke-width:11px">'+word+'</text><text x="0" y="0" style="font-size:60px;fill:'+tc+';stroke:#14100a;stroke-width:7px">'+word+'</text></g>';
- o+=lines.map((l,i)=>'<text x="200" y="'+(ty+(spare?42:38)+i*lh).toFixed(1)+'" style="font:700 '+sz+'px \'Space Grotesk\',Arial,sans-serif;fill:#14100a;stroke:none;text-anchor:middle">'+esc(l)+'</text>').join('');
+ o+='<g class="pow-w"><g transform="translate(200 '+ty.toFixed(1)+') rotate(-6) skewX(-8)"><text x="4" y="5" style="font-size:60px;fill:#14100a;stroke:#14100a;stroke-width:11px">'+word+'</text><text x="0" y="0" style="font-size:60px;fill:'+tc+';stroke:#14100a;stroke-width:7px">'+word+'</text></g></g>';
+ o+='<g class="pow-t">'+lines.map((l,i)=>'<text x="200" y="'+(ty+(spare?42:38)+i*lh).toFixed(1)+'" style="font:700 '+sz+'px \'Space Grotesk\',Arial,sans-serif;fill:#14100a;stroke:none;text-anchor:middle">'+esc(l)+'</text>').join('')+'</g>';
  const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 400 300');
  s.style.cssText='left:50%;top:50%;--w:'+(spare?90:94)+'%;--r:-2deg';s.innerHTML=o;powEl.appendChild(s);lwEl.classList.remove('shake');void lwEl.offsetWidth;lwEl.classList.add('shake')}
 let bid=0;
