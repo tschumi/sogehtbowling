@@ -138,16 +138,18 @@ function done(){
  state=2;const n=pins.filter(p=>p.d).length,left=pins.length-n,fresh=pins.length===10,all=10-left,f=rd-1,r=frames[f];
  r.push(n);
  const strike=fresh&&n===10,spare=!fresh&&left===0;
- const t=say(situation(fresh,n,all,left,gut),left);
-  if(spare||strike)comicTitle(spare,spare?'SPARE!':'STRIKE!',t);
-  else comicBubble((gut&&n===0)?'RINNE!':all+' von 10',t);
-  clearTimeout(msgT);msgT=setTimeout(dismiss,(strike||spare)?4500+t.length*50:2600+t.length*42);
  /* nächster Schritt: neuer Frame, gleiche Pins weiter, frisches Rack (10. Frame) oder Spielende */
  let next;
  if(f<9)next=strike||r.length===2?'frame':'keep';
  else if(r.length===1)next=strike?'fresh':'keep';
  else if(r.length===2&&r[0]+r[1]>=10)next=left===0?'fresh':'keep';
  else next='end';
+ /* letzter Wurf auf frische Pins (10. Frame): keine Sprüche, die einen weiteren Wurf versprechen */
+ const key=next==='end'&&fresh&&!strike?(n===0?'ende0':n<=5?'ende_wenig':'ende_viel'):situation(fresh,n,all,left,gut);
+ const t=say(key,left);
+  if(spare||strike)comicTitle(spare,spare?'SPARE!':'STRIKE!',t);
+  else comicBubble((gut&&n===0)?'RINNE!':all+' von 10',t);
+  clearTimeout(msgT);msgT=setTimeout(dismiss,(strike||spare)?4500+t.length*50:2600+t.length*42);
  if(next==='end'){gameOver=true;finalScore=renderSheet()}else renderSheet();
  pend=()=>{
   resetting=2;

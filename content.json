@@ -305,6 +305,33 @@
       "schnell": [
         "Viel Wucht, wenig Pins. {rest} stehen noch."
       ]
+    },
+    "ende0": {
+      "any": [
+        "Zum Abschluss nichts mehr. Die Pins bedanken sich fürs Spiel.",
+        "Letzter Wurf, keine Pins. Die Punkte von vorher zählen trotzdem."
+      ],
+      "schnell": [
+        "Mit Vollgas am Spielende vorbei."
+      ]
+    },
+    "ende_wenig": {
+      "any": [
+        "Ein paar zum Abschluss. Jeder Pin zählt.",
+        "Letzter Wurf, ein paar Pins. Immerhin noch Punkte geholt."
+      ],
+      "sanft": [
+        "Sanft zum Schluss. Ein paar Pins gibt es noch obendrauf."
+      ]
+    },
+    "ende_viel": {
+      "any": [
+        "Starker Schlusswurf. Fast alle sind gefallen.",
+        "Fast alles zum Abschluss. Schöner Schlusspunkt."
+      ],
+      "schnell": [
+        "Mit Wucht ins Ziel. Gutes Ende."
+      ]
     }
   }
 }
