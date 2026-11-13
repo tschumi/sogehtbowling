@@ -4,7 +4,7 @@ const cv=document.getElementById('lane'),c=cv.getContext('2d'),W=360,H=560,dpr=M
 cv.width=W*dpr;cv.height=H*dpr;c.scale(dpr,dpr);
 const $=id=>document.getElementById(id),toast=$('toast');
 /* Sprüche kommen aus content.json (siehe site.js) */
-let SPRUECHE={};(window.HG_CONTENT||Promise.resolve({})).then(c=>{if(c&&c.sprueche)SPRUECHE=c.sprueche}).catch(()=>{});
+let SPRUECHE={},WERTUNG=[];(window.HG_CONTENT||Promise.resolve({})).then(c=>{if(c&&c.sprueche)SPRUECHE=c.sprueche;if(c&&Array.isArray(c.endwertung))WERTUNG=c.endwertung}).catch(()=>{});
 const R=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.floor(Math.random()*a.length)];
 const ZAHL=['keiner','einer','zwei','drei','vier','fünf','sechs','sieben','acht','neun','zehn'];
 function situation(first,n,all,left,gut){
@@ -32,25 +32,29 @@ let fc=0,pins=[],ball=null,parts=[],state=0,settle=0,gut=false,lastV=9,ballNo=1,
 const powEl=$('pow'),lwEl=document.querySelector('.lw');let powT=[];
 function hidePow(){powT.forEach(clearTimeout);powT=[];powEl.querySelectorAll('svg').forEach(s=>{s.classList.add('out');setTimeout(()=>s.remove(),300)});toast.classList.remove('low')}
 
-function comicTitle(spare,word,txt){
- const rnd=(a,b)=>a+Math.random()*(b-a),cx=200,cy=150,id='t'+(++bid);let o='';
+/* kind: 'spare' | 'strike' | 'end' (Abschluss-Stern mit Punktzahl als Titel) */
+function comicTitle(kind,word,txt){
+ const spare=kind==='spare',E=kind==='end',rnd=(a,b)=>a+Math.random()*(b-a),cx=200,cy=150,id='t'+(++bid);let o='';
  const ring=(rx,ry,n,lo,hi,lo2,hi2)=>{const p=[];for(let i=0;i<n*2;i++){const a=i/(n*2)*Math.PI*2+rnd(-.04,.04),k=i%2?rnd(lo,hi):rnd(lo2,hi2);p.push((cx+Math.cos(a)*rx*k).toFixed(1)+','+(cy+Math.sin(a)*ry*k).toFixed(1))}return p.join(' ')};
  const star=(x,y,s,d)=>'<path class="pow-s" style="animation-delay:'+d+'s" d="M'+x+' '+(y-s)+'L'+(x+s*.3)+' '+(y-s*.4)+'L'+(x+s)+' '+(y-s*.3)+'L'+(x+s*.45)+' '+(y+s*.15)+'L'+(x+s*.6)+' '+(y+s)+'L'+x+' '+(y+s*.5)+'L'+(x-s*.6)+' '+(y+s)+'L'+(x-s*.45)+' '+(y+s*.15)+'L'+(x-s)+' '+(y-s*.3)+'L'+(x-s*.3)+' '+(y-s*.4)+'Z" fill="#ffd23f" stroke="#14100a" stroke-width="2.2" stroke-linejoin="round"/>';
- const P=spare?ring(172,120,30,.88,.92,.99,1.05):ring(176,126,13,.8,.86,1.02,1.18);
- const fill=spare?'#ffd23f':'#ff7a1a',dot=spare?'#ff9a2e':'#d4500a';
- {const N=spare?14:13;for(let i=0;i<N;i++){const a=spare?i/14*Math.PI*2+rnd(-.15,.15):(i+.5)/13*Math.PI*2,r1=spare?1.1:.98,r2=spare?rnd(1.2,1.3):rnd(1.16,1.26),w=spare?2.4:3.6,nx=-Math.sin(a)*w,ny=Math.cos(a)*w,x1=cx+Math.cos(a)*168*r1,y1=cy+Math.sin(a)*118*r1,x2=cx+Math.cos(a)*168*r2,y2=cy+Math.sin(a)*118*r2;o+='<polygon points="'+(x1+nx).toFixed(1)+','+(y1+ny).toFixed(1)+' '+x2.toFixed(1)+','+y2.toFixed(1)+' '+(x1-nx).toFixed(1)+','+(y1-ny).toFixed(1)+'" '+(spare?'fill="#14100a"':'fill="#ffd23f" stroke="#14100a" stroke-width="1.6" stroke-linejoin="round"')+'/>'}}
+ const P=spare?ring(172,120,30,.88,.92,.99,1.05):E?ring(186,146,22,.87,.91,1,1.09):ring(176,126,13,.8,.86,1.02,1.18);
+ const fill=spare?'#ffd23f':E?'#f7f2e6':'#ff7a1a',dot=spare?'#ff9a2e':E?'#ffb36b':'#d4500a';
+ /* Speedlines: Spare schwarz, Strike gelb, Abschluss orange */
+ {const N=spare?14:E?22:13;for(let i=0;i<N;i++){const a=spare?i/14*Math.PI*2+rnd(-.15,.15):(i+.5)/N*Math.PI*2,r1=spare?1.1:.98,r2=spare?rnd(1.2,1.3):rnd(1.16,1.28),w=spare?2.4:E?3.2:3.6,nx=-Math.sin(a)*w,ny=Math.cos(a)*w,x1=cx+Math.cos(a)*168*r1,y1=cy+Math.sin(a)*118*r1,x2=cx+Math.cos(a)*168*r2,y2=cy+Math.sin(a)*118*r2;o+='<polygon points="'+(x1+nx).toFixed(1)+','+(y1+ny).toFixed(1)+' '+x2.toFixed(1)+','+y2.toFixed(1)+' '+(x1-nx).toFixed(1)+','+(y1-ny).toFixed(1)+'" '+(spare?'fill="#14100a"':'fill="'+(E?'#ff7a1a':'#ffd23f')+'" stroke="#14100a" stroke-width="1.6" stroke-linejoin="round"')+'/>'}}
  for(let i=0;i<60;i++){const a=rnd(0,6.28),k=rnd(1.02,1.2),r=(1.28-k)*6;o+='<circle cx="'+(cx+Math.cos(a)*172*k).toFixed(1)+'" cy="'+(cy+Math.sin(a)*122*k).toFixed(1)+'" r="'+r.toFixed(1)+'" fill="#3a3530" opacity=".45"/>'}
  o+='<defs><pattern id="d'+id+'" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="3.5" cy="3.5" r="1.8" fill="'+dot+'"/></pattern><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset=".4" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="m'+id+'"><rect width="400" height="300" fill="url(#g'+id+')"/></mask></defs>';
  o+='<polygon points="'+P+'" transform="translate(6 7)" fill="#14100a" stroke="#14100a" stroke-width="5" stroke-linejoin="round"/>';
  o+='<polygon points="'+P+'" fill="'+fill+'" stroke="#14100a" stroke-width="5" stroke-linejoin="round"/>';
  o+='<polygon points="'+P+'" fill="url(#d'+id+')" mask="url(#m'+id+')"/>';
- if(!spare){let st='',a0=rnd(0,6.28);for(let i=0;i<5;i++){const a=a0+i/5*Math.PI*2+rnd(-.3,.3),k=rnd(1.12,1.28);st+=star(+(cx+Math.cos(a)*172*k).toFixed(1),+(cy+Math.sin(a)*124*k).toFixed(1),+rnd(7,14).toFixed(1),(.22+i*.07).toFixed(2))}o+=st}
+ if(!spare){const K=E?7:5;let st='',a0=rnd(0,6.28);for(let i=0;i<K;i++){const a=a0+i/K*Math.PI*2+rnd(-.3,.3),k=rnd(1.12,1.28);st+=star(+(cx+Math.cos(a)*172*k).toFixed(1),+(cy+Math.sin(a)*124*k).toFixed(1),+rnd(7,14).toFixed(1),(.22+i*.07).toFixed(2))}o+=st}
  /* Spruch gleich gross wie in der Sprechblase: dort 15/200 bei 84% Breite, hier ~28/400 bei 90% */
- const f=fitBubble(txt.split(/\s+/).filter(Boolean),word,spare?{CX:200,CY:150,RX:142,RY:98,max:28,min:19}:{CX:200,CY:152,RX:136,RY:96,max:28,min:19},74),ty=f.top+48,esc=l=>l.replace(/&/g,'&amp;').replace(/</g,'&lt;'),tc=spare?'#ff7a1a':'#ffe04a';
- o+='<g class="pow-w"><g transform="translate(200 '+ty.toFixed(1)+') rotate(-6) skewX(-8)"><text x="4" y="5" style="font-size:60px;fill:#14100a;stroke:#14100a;stroke-width:11px">'+word+'</text><text x="0" y="0" style="font-size:60px;fill:'+tc+';stroke:#14100a;stroke-width:7px">'+word+'</text></g></g>';
- o+='<g class="pow-t">'+f.lines.map((l,i)=>'<text x="200" y="'+(f.top+f.TH+i*f.lh+f.sz*.88).toFixed(1)+'" style="font:700 '+f.sz+'px \'Space Grotesk\',Arial,sans-serif;fill:#14100a;stroke:none;text-anchor:middle">'+esc(l)+'</text>').join('')+'</g>';
+ const g=spare?{CX:200,CY:150,RX:142,RY:98,max:28,min:19}:E?{CX:200,CY:160,RX:150,RY:100,max:28,min:19,band:[136,258]}:{CX:200,CY:152,RX:136,RY:96,max:28,min:19};
+ const ts=E?78:60,f=fitBubble(txt.split(/\s+/).filter(Boolean),word,g,E?0:74),ty=E?120:f.top+48,esc=l=>l.replace(/&/g,'&amp;').replace(/</g,'&lt;'),tc=spare||E?'#ff7a1a':'#ffe04a';
+ o+='<g class="pow-w"><g transform="translate(200 '+ty.toFixed(1)+') rotate(-6) skewX(-8)"><text x="4" y="5" style="font-size:'+ts+'px;fill:#14100a;stroke:#14100a;stroke-width:'+(ts*.18).toFixed(1)+'px">'+esc(word)+'</text><text x="0" y="0" style="font-size:'+ts+'px;fill:'+tc+';stroke:#14100a;stroke-width:'+(ts*.12).toFixed(1)+'px">'+esc(word)+'</text></g></g>';
+ o+='<g class="pow-t">'+f.lines.map((l,i)=>'<text x="200" y="'+(f.top+f.TH+i*f.lh+f.sz*.88).toFixed(1)+'" style="font:700 '+f.sz+'px \'Space Grotesk\',Arial,sans-serif;fill:#14100a;stroke:none;text-anchor:middle">'+esc(l)+'</text>').join('')
+  +'</g>';
  const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 400 300');
- s.style.cssText='left:50%;top:50%;--w:'+(spare?90:94)+'%;--r:-2deg';s.innerHTML=o;powEl.appendChild(s);lwEl.classList.remove('shake');void lwEl.offsetWidth;lwEl.classList.add('shake')}
+ s.style.cssText='left:50%;top:50%;--w:'+(spare?90:E?96:94)+'%;--r:-2deg';s.innerHTML=o;powEl.appendChild(s);lwEl.classList.remove('shake');void lwEl.offsetWidth;lwEl.classList.add('shake')}
 let bid=0;
 const mctx=document.createElement('canvas').getContext('2d');
 /* Text in eine Ellipse einpassen: echte Breiten messen, pro Zeile die verfügbare Breite aus der Ellipse berechnen.
@@ -61,7 +65,7 @@ function fitBubble(words,title,g=BUBBLE,TH=title?26:0){
  for(let sz=g.max;sz>=g.min;sz-=.5){
   mctx.font='700 '+sz+'px "Space Grotesk",Arial,sans-serif';const wsp=mctx.measureText(' ').width,W=w=>mctx.measureText(w).width,lh=sz*1.18;
   for(let n=1;n<=6;n++){
-   const top=CY-(n*lh+TH)/2;if(title&&g===BUBBLE){mctx.font='22px "Bowlby One","Arial Black",sans-serif';const tw=mctx.measureText(title).width;mctx.font='700 '+sz+'px "Space Grotesk",Arial,sans-serif';if(tw>ew(top,top+TH))continue}
+   const top=g.band?(g.band[0]+g.band[1]-n*lh)/2-TH:CY-(n*lh+TH)/2;if(g.band&&top<g.band[0])continue;if(title&&g===BUBBLE){mctx.font='22px "Bowlby One","Arial Black",sans-serif';const tw=mctx.measureText(title).width;mctx.font='700 '+sz+'px "Space Grotesk",Arial,sans-serif';if(tw>ew(top,top+TH))continue}
    const lines=[];let cur='',i=0,ok=true;
    for(const wd of words){
     const y=top+TH+i*lh,max=ew(y,y+lh);
@@ -147,7 +151,7 @@ function done(){
  /* letzter Wurf auf frische Pins (10. Frame): keine Sprüche, die einen weiteren Wurf versprechen */
  const key=next==='end'&&fresh&&!strike?(n===0?'ende0':n<=5?'ende_wenig':'ende_viel'):situation(fresh,n,all,left,gut);
  const t=say(key,left);
-  if(spare||strike)comicTitle(spare,spare?'SPARE!':'STRIKE!',t);
+  if(spare||strike)comicTitle(spare?'spare':'strike',spare?'SPARE!':'STRIKE!',t);
   else comicBubble((gut&&n===0)?'RINNE!':all+' von 10',t);
   clearTimeout(msgT);msgT=setTimeout(dismiss,(strike||spare)?4500+t.length*50:2600+t.length*42);
  if(next==='end'){gameOver=true;finalScore=renderSheet()}else renderSheet();
@@ -174,7 +178,7 @@ function step(){
   else if(j.rake){if(!rake)rake={y:178,t:0};const k=rake;k.t++;k.y-=6;pins.forEach(p=>{if(p.d&&p.y>k.y-4)p.y=k.y-4});if(k.y<-24){rake=null;j.cb&&j.cb();jobs.shift()}}
  }
  if(resetting===2&&!jobs.length)resetting=0;
- if(state===3&&!resetting&&!msgOpen){state=0;if(gameOver)showToast('Spiel vorbei: '+finalScore+' Punkte','Tippen für ein neues Spiel.')}
+ if(state===3&&!resetting&&!msgOpen){state=0;if(gameOver){const w=WERTUNG.filter(x=>finalScore>=x.ab).pop();comicTitle('end',String(finalScore),'Punkte! '+(w?w.text:''))}}
  if(ball){
   ball.a+=Math.abs(ball.vy)*.06;ball.vx+=ball.h;if(!ball.c&&!ball.g&&ball.y<340)ball.vx+=(180-ball.x)*ball.hk;ball.x+=ball.vx;ball.y+=ball.vy;
   if(!ball.g&&(ball.x<66||ball.x>294)){ball.g=true;gut=true;ball.vx=0;ball.x=ball.x<180?53:307}

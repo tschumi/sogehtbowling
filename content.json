@@ -333,5 +333,35 @@
         "Mit Wucht ins Ziel. Gutes Ende."
       ]
     }
-  }
+  },
+  "endwertung": [
+    {
+      "ab": 0,
+      "text": "Aufwärmrunde. Die Bahn hat gewonnen."
+    },
+    {
+      "ab": 50,
+      "text": "Solide Freizeitliga."
+    },
+    {
+      "ab": 100,
+      "text": "Ordentlich, da steckt was drin."
+    },
+    {
+      "ab": 150,
+      "text": "Starkes Spiel."
+    },
+    {
+      "ab": 200,
+      "text": "Profi-Niveau!"
+    },
+    {
+      "ab": 250,
+      "text": "Fast perfekt. Die Pins zittern noch."
+    },
+    {
+      "ab": 300,
+      "text": "Perfektes Spiel. Mehr geht nicht."
+    }
+  ]
 }
