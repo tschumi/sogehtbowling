@@ -221,7 +221,14 @@ function draw(){
   const ca=Math.cos(b.a||0),sa=Math.sin(b.a||0);[[-.28,-.42,.86],[.34,-.28,.9],[0,.12,.99]].forEach(([hx,hy,hz])=>{const y2=hy*ca-hz*sa,z=hy*sa+hz*ca;if(z>.15){c.beginPath();c.ellipse(b.x+hx*9,b.y+y2*9,1.6,1.6*z,0,0,7);c.fill()}})}
  parts.forEach(p=>{c.fillStyle=p.w?'rgba(255,255,255,'+p.l+')':'rgba(255,170,60,'+p.l+')';star(p.x,p.y,p.s*p.l/2)});
 }
-function loop(){if(!document.hidden){step();draw();meter()}requestAnimationFrame(loop)}
+/* Fester Physik-Takt (60/s), unabhängig von der Bildrate: fehlen Bilder, werden Schritte nachgeholt */
+const STEP=1000/60;let acc=0,last=0,fpsN=0,fpsT=0,fpsEl=null;
+if(new URLSearchParams(location.search).has('test')){fpsEl=document.createElement('div');fpsEl.style.cssText='position:absolute;right:6px;top:6px;z-index:5;font:700 11px "Space Grotesk",sans-serif;color:#fff;background:rgba(0,0,0,.55);padding:2px 6px;border-radius:4px;pointer-events:none';lwEl.appendChild(fpsEl)}
+function loop(ts){
+ if(!document.hidden&&last){acc+=Math.min(ts-last,250);let k=0;while(acc>=STEP&&k<15){step();acc-=STEP;k++}if(k===15)acc=0;draw();meter()}
+ last=ts;
+ if(fpsEl){fpsN++;if(ts-fpsT>=1000){fpsEl.textContent=Math.round(fpsN*1000/(ts-fpsT))+' fps';fpsN=0;fpsT=ts}}
+ requestAnimationFrame(loop)}
 cv.addEventListener('pointerdown',e=>{if(state)return;e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch(_){}aimX=toX(e);charge={t:performance.now()};toast.classList.remove('on');hidePow()});
 cv.addEventListener('pointerup',()=>go());
 cv.addEventListener('pointercancel',()=>{charge=null});
@@ -233,5 +240,5 @@ const go=()=>{if(charge){const v=5+8*Math.min(1,(performance.now()-charge.t)/T0)
 const meter=()=>{const p=charge?Math.min(1,(performance.now()-charge.t)/T0):0;pf.style.width=p*100+'%';pv.textContent=charge?Math.round((5+8*p)*2.8)+' km/h':''};
 cv.addEventListener('keydown',e=>{if(state===3){if(['Enter',' ','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();dismiss()}return}if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();aimX=Math.max(28,Math.min(332,aimX+(e.key==='ArrowLeft'?-14:14)));showToast('Ziel',aimX<150?'links':aimX>210?'rechts':'Mitte')}else if((e.key==='Enter'||e.key===' ')&&!e.repeat&&!state){e.preventDefault();toast.classList.remove('on');charge={t:performance.now()}}});
 cv.addEventListener('keyup',e=>{if(e.key==='Enter'||e.key===' ')go()});
-rack();newGame();loop();
+rack();newGame();requestAnimationFrame(loop);
 })();
