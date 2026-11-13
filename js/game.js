@@ -5,90 +5,16 @@ cv.width=W*dpr;cv.height=H*dpr;c.scale(dpr,dpr);
 const $=id=>document.getElementById(id),toast=$('toast');
 /* Sprüche kommen aus content.json (siehe site.js) */
 let SPRUECHE={},WERTUNG=[];(window.HG_CONTENT||Promise.resolve({})).then(c=>{if(c&&c.sprueche)SPRUECHE=c.sprueche;if(c&&Array.isArray(c.endwertung))WERTUNG=c.endwertung}).catch(()=>{});
-const R=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.floor(Math.random()*a.length)];
-const ZAHL=['keiner','einer','zwei','drei','vier','fünf','sechs','sieben','acht','neun','zehn'];
-function situation(first,n,all,left,gut){
- if(first){
-  if(n===10)return'strike';
-  if(n===0)return gut?'rinne1':'luft1';
-  if(left===1)return'neun1';
-  if(n===8&&pins.filter(p=>!p.d).every(p=>p.k<1))return'mitte1';
-  return n<=3?'wenig1':n<=6?'mittel1':'viel1';
- }
- if(left===0)return'spare';
- if(n===0)return gut?'rinne2':'luft2';
- if(left===1)return'knapp2';
- return all>=7?'rest2gut':all>=4?'rest2mittel':'rest2schwach';
-}
-function say(key,left){
-const g=SPRUECHE[key];if(!g||!g.any)return '';
- const v=lastV<6.5?'sanft':lastV>11.5?'schnell':'',pool=g[v]&&Math.random()<.6?g[v]:g.any,no=x=>x!==LAST[key];
- /* nie zweimal hintereinander derselbe Spruch pro Situation */
- const t=pick(pool.filter(no).length?pool.filter(no):g.any.filter(no).length?g.any.filter(no):pool);LAST[key]=t;
- return t.replace('{rest}',ZAHL[left]);
-}
-const LAST={};
+const R=(a,b)=>a+Math.random()*(b-a);
+/* Regeln (Zählung, Ablauf, Sprüche) liegen in rules.js */
+const {marks,scores,total,nextStep,spruchKey,createSay,rating}=window.HGRules,say=createSay(()=>SPRUECHE);
 let fc=0,pins=[],ball=null,parts=[],state=0,settle=0,gut=false,lastV=9,ballNo=1,rd=1,frames=[],gameOver=false,tt,pend=null,msgOpen=false,resetting=0,msgT=0;
 const powEl=$('pow'),lwEl=document.querySelector('.lw');let powT=[];
 function hidePow(){powT.forEach(clearTimeout);powT=[];powEl.querySelectorAll('svg').forEach(s=>{s.classList.add('out');setTimeout(()=>s.remove(),300)});toast.classList.remove('low')}
 
-/* kind: 'spare' | 'strike' | 'end' (Abschluss-Stern mit Punktzahl als Titel) */
-function comicTitle(kind,word,txt){
- const spare=kind==='spare',E=kind==='end',rnd=(a,b)=>a+Math.random()*(b-a),cx=200,cy=150,id='t'+(++bid);let o='';
- const ring=(rx,ry,n,lo,hi,lo2,hi2)=>{const p=[];for(let i=0;i<n*2;i++){const a=i/(n*2)*Math.PI*2+rnd(-.04,.04),k=i%2?rnd(lo,hi):rnd(lo2,hi2);p.push((cx+Math.cos(a)*rx*k).toFixed(1)+','+(cy+Math.sin(a)*ry*k).toFixed(1))}return p.join(' ')};
- const star=(x,y,s,d)=>'<path class="pow-s" style="animation-delay:'+d+'s" d="M'+x+' '+(y-s)+'L'+(x+s*.3)+' '+(y-s*.4)+'L'+(x+s)+' '+(y-s*.3)+'L'+(x+s*.45)+' '+(y+s*.15)+'L'+(x+s*.6)+' '+(y+s)+'L'+x+' '+(y+s*.5)+'L'+(x-s*.6)+' '+(y+s)+'L'+(x-s*.45)+' '+(y+s*.15)+'L'+(x-s)+' '+(y-s*.3)+'L'+(x-s*.3)+' '+(y-s*.4)+'Z" fill="#ffd23f" stroke="#14100a" stroke-width="2.2" stroke-linejoin="round"/>';
- const P=spare?ring(172,120,30,.88,.92,.99,1.05):E?ring(186,146,22,.87,.91,1,1.09):ring(176,126,13,.8,.86,1.02,1.18);
- const fill=spare?'#ffd23f':E?'#f7f2e6':'#ff7a1a',dot=spare?'#ff9a2e':E?'#ffb36b':'#d4500a';
- /* Speedlines: Spare schwarz, Strike gelb, Abschluss orange */
- {const N=spare?14:E?22:13;for(let i=0;i<N;i++){const a=spare?i/14*Math.PI*2+rnd(-.15,.15):(i+.5)/N*Math.PI*2,r1=spare?1.1:.98,r2=spare?rnd(1.2,1.3):rnd(1.16,1.28),w=spare?2.4:E?3.2:3.6,nx=-Math.sin(a)*w,ny=Math.cos(a)*w,x1=cx+Math.cos(a)*168*r1,y1=cy+Math.sin(a)*118*r1,x2=cx+Math.cos(a)*168*r2,y2=cy+Math.sin(a)*118*r2;o+='<polygon points="'+(x1+nx).toFixed(1)+','+(y1+ny).toFixed(1)+' '+x2.toFixed(1)+','+y2.toFixed(1)+' '+(x1-nx).toFixed(1)+','+(y1-ny).toFixed(1)+'" '+(spare?'fill="#14100a"':'fill="'+(E?'#ff7a1a':'#ffd23f')+'" stroke="#14100a" stroke-width="1.6" stroke-linejoin="round"')+'/>'}}
- for(let i=0;i<60;i++){const a=rnd(0,6.28),k=rnd(1.02,1.2),r=(1.28-k)*6;o+='<circle cx="'+(cx+Math.cos(a)*172*k).toFixed(1)+'" cy="'+(cy+Math.sin(a)*122*k).toFixed(1)+'" r="'+r.toFixed(1)+'" fill="#3a3530" opacity=".45"/>'}
- o+='<defs><pattern id="d'+id+'" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="3.5" cy="3.5" r="1.8" fill="'+dot+'"/></pattern><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset=".4" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="m'+id+'"><rect width="400" height="300" fill="url(#g'+id+')"/></mask></defs>';
- o+='<polygon points="'+P+'" transform="translate(6 7)" fill="#14100a" stroke="#14100a" stroke-width="5" stroke-linejoin="round"/>';
- o+='<polygon points="'+P+'" fill="'+fill+'" stroke="#14100a" stroke-width="5" stroke-linejoin="round"/>';
- o+='<polygon points="'+P+'" fill="url(#d'+id+')" mask="url(#m'+id+')"/>';
- if(!spare){const K=E?7:5;let st='',a0=rnd(0,6.28);for(let i=0;i<K;i++){const a=a0+i/K*Math.PI*2+rnd(-.3,.3),k=rnd(1.12,1.28);st+=star(+(cx+Math.cos(a)*172*k).toFixed(1),+(cy+Math.sin(a)*124*k).toFixed(1),+rnd(7,14).toFixed(1),(.22+i*.07).toFixed(2))}o+=st}
- /* Spruch gleich gross wie in der Sprechblase: dort 15/200 bei 84% Breite, hier ~28/400 bei 90% */
- const g=spare?{CX:200,CY:150,RX:142,RY:98,max:28,min:19}:E?{CX:200,CY:160,RX:150,RY:100,max:28,min:19,band:[136,258]}:{CX:200,CY:152,RX:136,RY:96,max:28,min:19};
- const ts=E?78:60,f=fitBubble(txt.split(/\s+/).filter(Boolean),word,g,E?0:74),ty=E?120:f.top+48,esc=l=>l.replace(/&/g,'&amp;').replace(/</g,'&lt;'),tc=spare||E?'#ff7a1a':'#ffe04a';
- o+='<g class="pow-w"><g transform="translate(200 '+ty.toFixed(1)+') rotate(-6) skewX(-8)"><text x="4" y="5" style="font-size:'+ts+'px;fill:#14100a;stroke:#14100a;stroke-width:'+(ts*.18).toFixed(1)+'px">'+esc(word)+'</text><text x="0" y="0" style="font-size:'+ts+'px;fill:'+tc+';stroke:#14100a;stroke-width:'+(ts*.12).toFixed(1)+'px">'+esc(word)+'</text></g></g>';
- o+='<g class="pow-t">'+f.lines.map((l,i)=>'<text x="200" y="'+(f.top+f.TH+i*f.lh+f.sz*.88).toFixed(1)+'" style="font:700 '+f.sz+'px \'Space Grotesk\',Arial,sans-serif;fill:#14100a;stroke:none;text-anchor:middle">'+esc(l)+'</text>').join('')
-  +'</g>';
- const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 400 300');
- s.style.cssText='left:50%;top:50%;--w:'+(spare?90:E?96:94)+'%;--r:-2deg';s.innerHTML=o;powEl.appendChild(s);lwEl.classList.remove('shake');void lwEl.offsetWidth;lwEl.classList.add('shake')}
-let bid=0;
-const mctx=document.createElement('canvas').getContext('2d');
-/* Text in eine Ellipse einpassen: echte Breiten messen, pro Zeile die verfügbare Breite aus der Ellipse berechnen.
-   g = Geometrie (Standard: Sprechblase); TH = Höhe für den Titel über dem Text */
-const BUBBLE={CX:100,CY:70,RX:86,RY:57,max:15,min:10};
-function fitBubble(words,title,g=BUBBLE,TH=title?26:0){
- const {CX,CY,RX,RY}=g,ew=(y0,y1)=>{const d=Math.max(Math.abs(y0-CY),Math.abs(y1-CY));return d>=RY?0:2*RX*Math.sqrt(1-(d/RY)*(d/RY))};
- for(let sz=g.max;sz>=g.min;sz-=.5){
-  mctx.font='700 '+sz+'px "Space Grotesk",Arial,sans-serif';const wsp=mctx.measureText(' ').width,W=w=>mctx.measureText(w).width,lh=sz*1.18;
-  for(let n=1;n<=6;n++){
-   const top=g.band?(g.band[0]+g.band[1]-n*lh)/2-TH:CY-(n*lh+TH)/2;if(g.band&&top<g.band[0])continue;if(title&&g===BUBBLE){mctx.font='22px "Bowlby One","Arial Black",sans-serif';const tw=mctx.measureText(title).width;mctx.font='700 '+sz+'px "Space Grotesk",Arial,sans-serif';if(tw>ew(top,top+TH))continue}
-   const lines=[];let cur='',i=0,ok=true;
-   for(const wd of words){
-    const y=top+TH+i*lh,max=ew(y,y+lh);
-    if(W(wd)>max){ok=false;break}
-    if(cur&&W(cur)+wsp+W(wd)>max){lines.push(cur);cur=wd;i++;if(i>=n){ok=false;break}const y2=top+TH+i*lh;if(W(wd)>ew(y2,y2+lh)){ok=false;break}}
-    else cur=cur?cur+' '+wd:wd}
-   if(ok&&i<n){if(cur)lines.push(cur);return{sz,lh,lines,top,TH}}
-  }
- }
- const sz=g.min,lh=sz*1.18,lines=words.join(' ').match(new RegExp('.{1,'+Math.floor(2*RX/(sz*.55))+'}(\\s|$)','g')).map(l=>l.trim());return{sz,lh,lines,top:CY-(lines.length*lh+TH)/2,TH}
-}
-function comicBubble(title,txt,top,wd,pop){
- const id='y'+(++bid),words=txt.split(/\s+/).filter(Boolean),f=fitBubble(words,title),esc=l=>l.replace(/&/g,'&amp;').replace(/</g,'&lt;');
- const body='M100 8C150 8 192 34 192 70C192 106 150 132 108 132C96 132 86 131 76 129L44 160L56 124C26 114 8 94 8 70C8 34 50 8 100 8Z';
- const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 200 170');
- if(!pop)s.classList.add('soft');s.style.cssText='left:50%;top:'+(top||50)+'%;--w:'+(wd||84)+'%;--r:-1.5deg';
- s.innerHTML='<defs><pattern id="d'+id+'" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="2.5" cy="2.5" r="1.2" fill="#ff9a2e"/></pattern><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="m'+id+'"><rect width="200" height="170" fill="url(#g'+id+')"/></mask></defs>'
-  +'<path d="'+body+'" transform="translate(4 5)" fill="#14100a" stroke="#14100a" stroke-width="4" stroke-linejoin="round"/>'
-  +'<path d="'+body+'" fill="#ffc477" stroke="#14100a" stroke-width="4" stroke-linejoin="round"/>'
-  +'<path d="'+body+'" fill="url(#d'+id+')" mask="url(#m'+id+')"/>'
-  +(title?'<text x="100" y="'+(f.top+20).toFixed(1)+'" style="font-size:22px;fill:#14100a;stroke:none">'+esc(title)+'</text>':'')
-  +f.lines.map((l,i)=>'<text x="100" y="'+(f.top+f.TH+i*f.lh+f.sz*.88).toFixed(1)+'" style="font:700 '+f.sz+'px \'Space Grotesk\',Arial,sans-serif;fill:#14100a;stroke:none;text-anchor:middle">'+esc(l)+'</text>').join('');
- powEl.appendChild(s)}
+/* Comic-Einblendungen liegen in comics.js */
+function comicTitle(kind,word,txt){HGComics.title(powEl,kind,word,txt);lwEl.classList.remove('shake');void lwEl.offsetWidth;lwEl.classList.add('shake')}
+function comicBubble(title,txt){HGComics.bubble(powEl,title,txt)}
 function showToast(a,b){toast.firstChild.textContent=a;toast.lastChild.textContent=b;toast.classList.add('on')}
 function rack(){pins=[];[[4,70],[3,94],[2,118],[1,142]].forEach(([n,y])=>{for(let i=0;i<n;i++)pins.push({x:180+(i-(n-1)/2)*26,y,vx:0,vy:0,r:0,vr:0,d:false,oy:0,k:(n===4&&(i===0||i===3))?R(.3,.8):(n===3&&(i===0||i===2))?R(.5,.9):1})})}
 let rake=null,T={y:-114},jobs=[];
@@ -117,40 +43,20 @@ function throwBall(tx,pwr){
  else if(cheat==='s'){const st=pins.filter(p=>!p.d).sort(()=>Math.random()-.5).slice(0,pins.length===10?2:0);pins.forEach(p=>{if(!st.includes(p)){p.d=true;p.r=R(-1,1)}});if(pins.length===10)cheat='s2';else cheat=0}
  else if(cheat==='s2'&&pins.length<10){cheat=0;pins.forEach(p=>{p.d=true;p.r=R(-1,1)})}ball={x:180,y:H-36,vx:(tx-180)/N+R(-.2,.2)*v/9,vy:-v,h:R(-.012,.012),hk:.0006*9/v,c:0,a:0,g:false};
  }
-/* Offizielle Zählweise: 10 Frames, Strike = 10 + nächste 2 Würfe, Spare = 10 + nächster Wurf, 10. Frame mit Bonuswürfen */
 function newGame(){frames=Array.from({length:10},()=>[]);rd=1;ballNo=1;gameOver=false;renderSheet();renderDots()}
 function renderDots(){const d=document.querySelector('.dots');d.classList.toggle('three',rd===10&&ballNo===3);d.querySelectorAll('i').forEach((x,i)=>x.classList.toggle('on',i<ballNo))}
-function marks(r,f){
- const m=v=>v===0?'-':String(v);
- if(f<9)return r[0]===10?['','X']:[r[0]===undefined?'':m(r[0]),r[1]===undefined?'':r[0]+r[1]===10?'/':m(r[1])];
- const o=[];let up=10,fresh=true;r.forEach(v=>{if(fresh&&v===10)o.push('X');else if(!fresh&&v===up){o.push('/');up=10;fresh=true}else{o.push(m(v));if(fresh){up=10-v;fresh=false}else{up=10;fresh=true}}});
- while(o.length<3)o.push('');return o}
-function scores(){
- const flat=[].concat(...frames),out=[];let i=0,cum=0,known=true;
- frames.forEach((r,f)=>{
-  let v=null;
-  if(f<9){if(r[0]===10){if(flat[i+2]!==undefined)v=10+flat[i+1]+flat[i+2]}
-   else if(r.length===2){const s=r[0]+r[1];if(s<10)v=s;else if(flat[i+2]!==undefined)v=10+flat[i+2]}}
-  else if(r.length===3||(r.length===2&&r[0]+r[1]<10))v=r.reduce((a,b)=>a+b,0);
-  i+=r.length;if(v===null)known=false;if(known){cum+=v;out.push(cum)}else out.push(null)});
- return out}
 function renderSheet(){
- const sc=scores(),cur=gameOver?-1:rd-1;
+ const sc=scores(frames),cur=gameOver?-1:rd-1;
  $('sheet').innerHTML=frames.map((r,f)=>'<div class="fr'+(f===cur?' cur':'')+(f===9?' f10':'')+'"><span class="n">'+(f+1)+'</span><span class="bx">'+marks(r,f).map(x=>'<i>'+x+'</i>').join('')+'</span><b>'+(sc[f]===null?'':sc[f])+'</b></div>').join('');
- const tot=sc.filter(x=>x!==null).pop()||0;$('sheet').setAttribute('aria-label','Spielstand: Frame '+Math.min(rd,10)+', '+tot+' Punkte');return tot}
+ const tot=total(frames);$('sheet').setAttribute('aria-label','Spielstand: Frame '+Math.min(rd,10)+', '+tot+' Punkte');return tot}
 function done(){
  state=2;const n=pins.filter(p=>p.d).length,left=pins.length-n,fresh=pins.length===10,all=10-left,f=rd-1,r=frames[f];
  r.push(n);
  const strike=fresh&&n===10,spare=!fresh&&left===0;
  /* nächster Schritt: neuer Frame, gleiche Pins weiter, frisches Rack (10. Frame) oder Spielende */
- let next;
- if(f<9)next=strike||r.length===2?'frame':'keep';
- else if(r.length===1)next=strike?'fresh':'keep';
- else if(r.length===2&&r[0]+r[1]>=10)next=left===0?'fresh':'keep';
- else next='end';
- /* letzter Wurf auf frische Pins (10. Frame): keine Sprüche, die einen weiteren Wurf versprechen */
- const key=next==='end'&&fresh&&!strike?(n===0?'ende0':n<=5?'ende_wenig':'ende_viel'):situation(fresh,n,all,left,gut);
- const t=say(key,left);
+ const next=nextStep(r,f,strike,left);
+ const key=spruchKey({fresh,n,left,gut,mitte:pins.filter(p=>!p.d).every(p=>p.k<1),last:next==='end'});
+ const t=say(key,left,lastV);
   if(spare||strike)comicTitle(spare?'spare':'strike',spare?'SPARE!':'STRIKE!',t);
   else comicBubble((gut&&n===0)?'RINNE!':all+' von 10',t);
   clearTimeout(msgT);msgT=setTimeout(dismiss,(strike||spare)?4500+t.length*50:2600+t.length*42);
@@ -178,7 +84,7 @@ function step(){
   else if(j.rake){if(!rake)rake={y:178,t:0};const k=rake;k.t++;k.y-=6;pins.forEach(p=>{if(p.d&&p.y>k.y-4)p.y=k.y-4});if(k.y<-24){rake=null;j.cb&&j.cb();jobs.shift()}}
  }
  if(resetting===2&&!jobs.length)resetting=0;
- if(state===3&&!resetting&&!msgOpen){state=0;if(gameOver){const w=WERTUNG.filter(x=>finalScore>=x.ab).pop();comicTitle('end',String(finalScore),'Punkte! '+(w?w.text:''))}}
+ if(state===3&&!resetting&&!msgOpen){state=0;if(gameOver)comicTitle('end',String(finalScore),('Punkte! '+rating(WERTUNG,finalScore)).trim())}
  if(ball){
   ball.a+=Math.abs(ball.vy)*.06;ball.vx+=ball.h;if(!ball.c&&!ball.g&&ball.y<340)ball.vx+=(180-ball.x)*ball.hk;ball.x+=ball.vx;ball.y+=ball.vy;
   if(!ball.g&&(ball.x<66||ball.x>294)){ball.g=true;gut=true;ball.vx=0;ball.x=ball.x<180?53:307}

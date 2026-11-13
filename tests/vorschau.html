@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vorschau Sprüche</title>
+<!--
+  Zeigt jeden Spruch aus content.json in seiner echten Einblendung (gleicher Code wie im Spiel: js/comics.js).
+  Öffnen über einen lokalen Server im Projektordner:
+    python3 -m http.server 8000   →   http://localhost:8000/tests/vorschau.html
+  Markierungen: rot = Text passt nicht in die Form, gelb = Schrift auf Mindestgrösse geschrumpft.
+  Der automatische Test (tests/layout.test.js) liest das Ergebnis aus #ergebnis.
+-->
+<link rel="stylesheet" href="../css/styles.css">
+<style>
+ body{background:#171c36;color:#f2f0ea;font:400 15px/1.5 "Space Grotesk",system-ui,sans-serif;margin:0;padding:24px}
+ h1{font:400 1.6rem "Bowlby One","Arial Black",sans-serif;margin:0 0 4px;color:#ff7a1a}
+ h2{font:700 1.05rem "Space Grotesk",sans-serif;margin:28px 0 10px;color:#ff7a1a}
+ h2 small{color:#a9b0cf;font-weight:400;margin-left:8px}
+ #ergebnis{margin:8px 0 0;padding:10px 14px;border-radius:8px;background:#232a4d;display:inline-block}
+ #ergebnis.rot{background:#7a1f1f}#ergebnis.gelb{background:#6b5410}
+ .grid{display:flex;flex-wrap:wrap;gap:12px}
+ .tile{width:300px;border-radius:10px;overflow:hidden;background:#0b0e1c;outline:3px solid transparent}
+ .tile.rot{outline-color:#ff4d4d}.tile.gelb{outline-color:#ffd23f}
+ .lane{position:relative;height:300px;background:#d9a35a}
+ .meta{padding:6px 10px;font-size:12px;color:#a9b0cf;min-height:36px}
+ .meta b{color:#f2f0ea;font-weight:700}
+ .meta .flag{float:right;font-weight:700}.rot .flag{color:#ff4d4d}.gelb .flag{color:#ffd23f}
+ /* Animationen aus: immer den Endzustand zeigen */
+ .pow svg,.pow svg *{animation:none!important;opacity:1!important}
+ .pow svg{transform:translate(-50%,-50%) rotate(var(--r,0deg))!important}
+</style>
+</head>
+<body>
+<h1>Vorschau Sprüche</h1>
+<div id="ergebnis" data-status="laden">Lade …</div>
+<div id="inhalt"></div>
+<script src="../js/rules.js"></script>
+<script src="../js/comics.js"></script>
+<script>
+(async()=>{
+ const R=window.HGRules,C=window.HGComics,out=document.getElementById('inhalt'),res=document.getElementById('ergebnis');
+ const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+ /* Schriften müssen geladen sein, sonst misst die Texteinpassung mit der Ersatzschrift */
+ await Promise.all([document.fonts.load('700 15px "Space Grotesk"'),document.fonts.load('22px "Bowlby One"')]);
+ const content=await (await fetch('../content.json',{cache:'no-cache'})).json();
+ const S=content.sprueche||{};
+
+ /* Beispiel-Situation je Gruppe: Titel der Sprechblase und Anzahl stehender Pins (für {rest}) */
+ const BSP={
+  rinne1:['RINNE!',10],luft1:['0 von 10',10],wenig1:['3 von 10',7],mittel1:['5 von 10',5],mitte1:['8 von 10',2],
+  viel1:['8 von 10',2],neun1:['9 von 10',1],rinne2:['RINNE!',3],luft2:['6 von 10',4],knapp2:['9 von 10',1],
+  rest2gut:['8 von 10',2],rest2mittel:['5 von 10',5],rest2schwach:['2 von 10',8],
+  ende0:['0 von 10',10],ende_wenig:['3 von 10',7],ende_viel:['8 von 10',2]
+ };
+ const TEMPI=['any','schnell','sanft'],NAME={any:'allgemein',schnell:'schnell',sanft:'sanft'};
+ const fehler=[],warn=[];let n=0;
+
+ function tile(grid,label,draw){
+  const t=document.createElement('div');t.className='tile';
+  t.innerHTML='<div class="lane"><div class="pow"></div></div><div class="meta"></div>';
+  grid.appendChild(t);
+  const r=draw(t.querySelector('.pow')),f=r.fit;n++;
+  let flag='';
+  if(f.fallback){t.classList.add('rot');flag='passt nicht';fehler.push(label)}
+  else if(f.sz<=r.geo.min){t.classList.add('gelb');flag='Mindestgrösse';warn.push(label)}
+  t.querySelector('.meta').innerHTML='<span class="flag">'+flag+'</span>'+esc(label)+'<br><b>'+f.sz+'</b> px · '+f.lines.length+' Zeile'+(f.lines.length===1?'':'n');
+ }
+ function section(title,sub){
+  const h=document.createElement('h2');h.innerHTML=esc(title)+(sub?'<small>'+esc(sub)+'</small>':'');out.appendChild(h);
+  const g=document.createElement('div');g.className='grid';out.appendChild(g);return g;
+ }
+
+ for(const key of R.KEYS){
+  const g=S[key];if(!g)continue;
+  const grid=section(key,key==='strike'?'Strike-Stern':key==='spare'?'Spare-Stern':'Sprechblase');
+  for(const tp of TEMPI)for(const txt of g[tp]||[]){
+   const label=key+' · '+NAME[tp]+' · '+txt;
+   if(key==='strike'||key==='spare')tile(grid,label,el=>C.title(el,key,key==='spare'?'SPARE!':'STRIKE!',txt));
+   else{const [ti,left]=BSP[key]||['5 von 10',5];tile(grid,label,el=>C.bubble(el,ti,txt.replace('{rest}',R.ZAHL[left]),{pop:true}))}
+  }
+ }
+ /* Abschluss-Stern: je Bewertungsstufe mit der höchsten Punktzahl der Stufe (breiteste Zahl) */
+ const W=content.endwertung||[];
+ if(W.length){
+  const grid=section('endwertung','Abschluss-Stern');
+  W.forEach((w,i)=>{const score=i+1<W.length?W[i+1].ab-1:300,txt=('Punkte! '+w.text).trim();
+   tile(grid,'endwertung · ab '+w.ab+' · '+w.text,el=>C.title(el,'end',String(score),txt))});
+ }
+
+ const status=fehler.length?'rot':warn.length?'gelb':'ok';
+ res.className=status;res.dataset.status=status;
+ res.dataset.result=JSON.stringify({total:n,fehler,warn,height:document.documentElement.scrollHeight});
+ res.innerHTML='<b>'+n+'</b> Einblendungen · <b>'+fehler.length+'</b> passen nicht · <b>'+warn.length+'</b> auf Mindestgrösse';
+})().catch(e=>{const r=document.getElementById('ergebnis');r.className='rot';r.dataset.status='fehler';r.dataset.result=JSON.stringify({error:String(e)});r.textContent='Fehler: '+e});
+</script>
+</body>
+</html>
