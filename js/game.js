@@ -117,10 +117,9 @@ function done(){
  $('sP').textContent=S.p;$('sS').textContent=S.s;$('sR').textContent=S.r;$('sG').textContent=S.g;
  const t=say(situation(first,n,all,left,gut),left);
  const over=strike||!first;
-  const qt=t.replace(/^(Strike|Spare)[!.]\s*/,'');
-  if(spare||strike)comicTitle(spare,spare?'SPARE!':'STRIKE!',qt);
-  else comicBubble((gut&&n===0)?'RINNE!':all+' von '+tot,qt);
-  clearTimeout(msgT);msgT=setTimeout(dismiss,(strike||spare)?4500+qt.length*50:2600+qt.length*42);
+  if(spare||strike)comicTitle(spare,spare?'SPARE!':'STRIKE!',t);
+  else comicBubble((gut&&n===0)?'RINNE!':all+' von '+tot,t);
+  clearTimeout(msgT);msgT=setTimeout(dismiss,(strike||spare)?4500+t.length*50:2600+t.length*42);
  pend=()=>{
   resetting=2;
   if(over){plan(false);ballNo=1;prev=0;rd++}
