@@ -22,9 +22,12 @@ function situation(first,n,all,left,gut){
 }
 function say(key,left){
 const g=SPRUECHE[key];if(!g||!g.any)return '';
- const v=lastV<6.5?'sanft':lastV>11.5?'schnell':'';
- return pick(g[v]&&Math.random()<.6?g[v]:g.any).replace('{rest}',ZAHL[left]);
+ const v=lastV<6.5?'sanft':lastV>11.5?'schnell':'',pool=g[v]&&Math.random()<.6?g[v]:g.any,no=x=>x!==LAST[key];
+ /* nie zweimal hintereinander derselbe Spruch pro Situation */
+ const t=pick(pool.filter(no).length?pool.filter(no):g.any.filter(no).length?g.any.filter(no):pool);LAST[key]=t;
+ return t.replace('{rest}',ZAHL[left]);
 }
+const LAST={};
 let fc=0,pins=[],ball=null,parts=[],state=0,settle=0,gut=false,lastV=9,ballNo=1,prev=0,rd=1,tt,pend=null,msgOpen=false,resetting=0,msgT=0;
 const powEl=$('pow'),lwEl=document.querySelector('.lw');let powT=[];
 function hidePow(){powT.forEach(clearTimeout);powT=[];powEl.querySelectorAll('svg').forEach(s=>{s.classList.add('out');setTimeout(()=>s.remove(),300)});toast.classList.remove('low')}
