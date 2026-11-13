@@ -33,7 +33,7 @@ function comicTitle(spare,word,txt){
  const rnd=(a,b)=>a+Math.random()*(b-a),cx=200,cy=150,id='t'+(++bid);let o='';
  const ring=(rx,ry,n,lo,hi,lo2,hi2)=>{const p=[];for(let i=0;i<n*2;i++){const a=i/(n*2)*Math.PI*2+rnd(-.04,.04),k=i%2?rnd(lo,hi):rnd(lo2,hi2);p.push((cx+Math.cos(a)*rx*k).toFixed(1)+','+(cy+Math.sin(a)*ry*k).toFixed(1))}return p.join(' ')};
  const star=(x,y,s,d)=>'<path class="pow-s" style="animation-delay:'+d+'s" d="M'+x+' '+(y-s)+'L'+(x+s*.3)+' '+(y-s*.4)+'L'+(x+s)+' '+(y-s*.3)+'L'+(x+s*.45)+' '+(y+s*.15)+'L'+(x+s*.6)+' '+(y+s)+'L'+x+' '+(y+s*.5)+'L'+(x-s*.6)+' '+(y+s)+'L'+(x-s*.45)+' '+(y+s*.15)+'L'+(x-s)+' '+(y-s*.3)+'L'+(x-s*.3)+' '+(y-s*.4)+'Z" fill="#ffd23f" stroke="#14100a" stroke-width="2.2" stroke-linejoin="round"/>';
- const P=spare?ring(168,118,30,.86,.9,.98,1.04):ring(168,120,13,.72,.8,.96,1.14);
+ const P=spare?ring(172,120,30,.88,.92,.99,1.05):ring(176,126,13,.8,.86,1.02,1.18);
  const fill=spare?'#ffd23f':'#ff7a1a',dot=spare?'#ff9a2e':'#d4500a';
  {const N=spare?14:13;for(let i=0;i<N;i++){const a=spare?i/14*Math.PI*2+rnd(-.15,.15):(i+.5)/13*Math.PI*2,r1=spare?1.1:.98,r2=spare?rnd(1.2,1.3):rnd(1.16,1.26),w=spare?2.4:3.6,nx=-Math.sin(a)*w,ny=Math.cos(a)*w,x1=cx+Math.cos(a)*168*r1,y1=cy+Math.sin(a)*118*r1,x2=cx+Math.cos(a)*168*r2,y2=cy+Math.sin(a)*118*r2;o+='<polygon points="'+(x1+nx).toFixed(1)+','+(y1+ny).toFixed(1)+' '+x2.toFixed(1)+','+y2.toFixed(1)+' '+(x1-nx).toFixed(1)+','+(y1-ny).toFixed(1)+'" '+(spare?'fill="#14100a"':'fill="#ffd23f" stroke="#14100a" stroke-width="1.6" stroke-linejoin="round"')+'/>'}}
  for(let i=0;i<60;i++){const a=rnd(0,6.28),k=rnd(1.02,1.2),r=(1.28-k)*6;o+='<circle cx="'+(cx+Math.cos(a)*172*k).toFixed(1)+'" cy="'+(cy+Math.sin(a)*122*k).toFixed(1)+'" r="'+r.toFixed(1)+'" fill="#3a3530" opacity=".45"/>'}
@@ -42,22 +42,23 @@ function comicTitle(spare,word,txt){
  o+='<polygon points="'+P+'" fill="'+fill+'" stroke="#14100a" stroke-width="5" stroke-linejoin="round"/>';
  o+='<polygon points="'+P+'" fill="url(#d'+id+')" mask="url(#m'+id+')"/>';
  if(!spare){let st='',a0=rnd(0,6.28);for(let i=0;i<5;i++){const a=a0+i/5*Math.PI*2+rnd(-.3,.3),k=rnd(1.12,1.28);st+=star(+(cx+Math.cos(a)*172*k).toFixed(1),+(cy+Math.sin(a)*124*k).toFixed(1),+rnd(7,14).toFixed(1),(.22+i*.07).toFixed(2))}o+=st}
- const words=txt.split(/\s+/).filter(Boolean),maxW=spare?224:220,wrap=z=>{mctx.font='700 '+z+'px "Space Grotesk",Arial,sans-serif';const L=[];let cur='';words.forEach(wd=>{const t=cur?cur+' '+wd:wd;if(cur&&mctx.measureText(t).width>maxW){L.push(cur);cur=wd}else cur=t});if(cur)L.push(cur);return L};
- let sz=20,lines=wrap(sz);while(lines.length>2&&sz>16)lines=wrap(--sz);if(lines.length>2){sz=18;lines=wrap(sz);while(lines.length>3&&sz>13)lines=wrap(--sz)}
- const lh=sz*1.2,ty=150-(lines.length-1)*lh*.5,esc=l=>l.replace(/&/g,'&amp;').replace(/</g,'&lt;'),tc=spare?'#ff7a1a':'#ffe04a';
+ /* Spruch gleich gross wie in der Sprechblase: dort 15/200 bei 84% Breite, hier ~28/400 bei 90% */
+ const f=fitBubble(txt.split(/\s+/).filter(Boolean),word,spare?{CX:200,CY:150,RX:142,RY:98,max:28,min:19}:{CX:200,CY:152,RX:136,RY:96,max:28,min:19},74),ty=f.top+48,esc=l=>l.replace(/&/g,'&amp;').replace(/</g,'&lt;'),tc=spare?'#ff7a1a':'#ffe04a';
  o+='<g class="pow-w"><g transform="translate(200 '+ty.toFixed(1)+') rotate(-6) skewX(-8)"><text x="4" y="5" style="font-size:60px;fill:#14100a;stroke:#14100a;stroke-width:11px">'+word+'</text><text x="0" y="0" style="font-size:60px;fill:'+tc+';stroke:#14100a;stroke-width:7px">'+word+'</text></g></g>';
- o+='<g class="pow-t">'+lines.map((l,i)=>'<text x="200" y="'+(ty+42+i*lh).toFixed(1)+'" style="font:700 '+sz+'px \'Space Grotesk\',Arial,sans-serif;fill:#14100a;stroke:none;text-anchor:middle">'+esc(l)+'</text>').join('')+'</g>';
+ o+='<g class="pow-t">'+f.lines.map((l,i)=>'<text x="200" y="'+(f.top+f.TH+i*f.lh+f.sz*.88).toFixed(1)+'" style="font:700 '+f.sz+'px \'Space Grotesk\',Arial,sans-serif;fill:#14100a;stroke:none;text-anchor:middle">'+esc(l)+'</text>').join('')+'</g>';
  const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 400 300');
  s.style.cssText='left:50%;top:50%;--w:'+(spare?90:94)+'%;--r:-2deg';s.innerHTML=o;powEl.appendChild(s);lwEl.classList.remove('shake');void lwEl.offsetWidth;lwEl.classList.add('shake')}
 let bid=0;
 const mctx=document.createElement('canvas').getContext('2d');
-/* Text in die Ellipse der Blase einpassen: echte Breiten messen, pro Zeile die verfügbare Breite aus der Ellipse berechnen */
-function fitBubble(words,title){
- const CX=100,CY=70,RX=86,RY=57,TH=title?26:0,ew=(y0,y1)=>{const d=Math.max(Math.abs(y0-CY),Math.abs(y1-CY));return d>=RY?0:2*RX*Math.sqrt(1-(d/RY)*(d/RY))};
- for(let sz=15;sz>=10;sz-=.5){
+/* Text in eine Ellipse einpassen: echte Breiten messen, pro Zeile die verfügbare Breite aus der Ellipse berechnen.
+   g = Geometrie (Standard: Sprechblase); TH = Höhe für den Titel über dem Text */
+const BUBBLE={CX:100,CY:70,RX:86,RY:57,max:15,min:10};
+function fitBubble(words,title,g=BUBBLE,TH=title?26:0){
+ const {CX,CY,RX,RY}=g,ew=(y0,y1)=>{const d=Math.max(Math.abs(y0-CY),Math.abs(y1-CY));return d>=RY?0:2*RX*Math.sqrt(1-(d/RY)*(d/RY))};
+ for(let sz=g.max;sz>=g.min;sz-=.5){
   mctx.font='700 '+sz+'px "Space Grotesk",Arial,sans-serif';const wsp=mctx.measureText(' ').width,W=w=>mctx.measureText(w).width,lh=sz*1.18;
   for(let n=1;n<=6;n++){
-   const top=CY-(n*lh+TH)/2;if(title){mctx.font='22px "Bowlby One","Arial Black",sans-serif';const tw=mctx.measureText(title).width;mctx.font='700 '+sz+'px "Space Grotesk",Arial,sans-serif';if(tw>ew(top,top+TH))continue}
+   const top=CY-(n*lh+TH)/2;if(title&&g===BUBBLE){mctx.font='22px "Bowlby One","Arial Black",sans-serif';const tw=mctx.measureText(title).width;mctx.font='700 '+sz+'px "Space Grotesk",Arial,sans-serif';if(tw>ew(top,top+TH))continue}
    const lines=[];let cur='',i=0,ok=true;
    for(const wd of words){
     const y=top+TH+i*lh,max=ew(y,y+lh);
@@ -67,7 +68,7 @@ function fitBubble(words,title){
    if(ok&&i<n){if(cur)lines.push(cur);return{sz,lh,lines,top,TH}}
   }
  }
- const sz=10,lh=11.8,lines=words.join(' ').match(/.{1,26}(\s|$)/g).map(l=>l.trim());return{sz,lh,lines,top:70-(lines.length*lh+TH)/2,TH}
+ const sz=g.min,lh=sz*1.18,lines=words.join(' ').match(new RegExp('.{1,'+Math.floor(2*RX/(sz*.55))+'}(\\s|$)','g')).map(l=>l.trim());return{sz,lh,lines,top:CY-(lines.length*lh+TH)/2,TH}
 }
 function comicBubble(title,txt,top,wd,pop){
  const id='y'+(++bid),words=txt.split(/\s+/).filter(Boolean),f=fitBubble(words,title),esc=l=>l.replace(/&/g,'&amp;').replace(/</g,'&lt;');
