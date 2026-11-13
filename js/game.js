@@ -174,7 +174,7 @@ function step(){
   else if(j.rake){if(!rake)rake={y:178,t:0};const k=rake;k.t++;k.y-=6;pins.forEach(p=>{if(p.d&&p.y>k.y-4)p.y=k.y-4});if(k.y<-24){rake=null;j.cb&&j.cb();jobs.shift()}}
  }
  if(resetting===2&&!jobs.length)resetting=0;
- if(state===3&&!resetting&&!msgOpen){state=0;if(gameOver)showToast('Spiel vorbei: '+finalScore+' Punkte','Nächster Wurf startet ein neues Spiel.')}
+ if(state===3&&!resetting&&!msgOpen){state=0;if(gameOver)showToast('Spiel vorbei: '+finalScore+' Punkte','Tippen für ein neues Spiel.')}
  if(ball){
   ball.a+=Math.abs(ball.vy)*.06;ball.vx+=ball.h;if(!ball.c&&!ball.g&&ball.y<340)ball.vx+=(180-ball.x)*ball.hk;ball.x+=ball.vx;ball.y+=ball.vy;
   if(!ball.g&&(ball.x<66||ball.x>294)){ball.g=true;gut=true;ball.vx=0;ball.x=ball.x<180?53:307}
@@ -231,7 +231,9 @@ function loop(ts){
  last=ts;
  if(fpsEl){fpsN++;if(ts-fpsT>=1000){fpsEl.textContent=Math.round(fpsN*1000/(ts-fpsT))+' fps';fpsN=0;fpsT=ts}}
  requestAnimationFrame(loop)}
-cv.addEventListener('pointerdown',e=>{if(state)return;e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch(_){}aimX=toX(e);charge={t:performance.now()};toast.classList.remove('on');hidePow()});
+/* nach Spielende: erster Klick/Tipp schliesst die Meldung und startet ein neues Spiel, wirft aber nicht */
+const restart=()=>{newGame();toast.classList.remove('on');hidePow()};
+cv.addEventListener('pointerdown',e=>{if(state)return;e.preventDefault();if(gameOver){restart();return}try{cv.setPointerCapture(e.pointerId)}catch(_){}aimX=toX(e);charge={t:performance.now()};toast.classList.remove('on');hidePow()});
 cv.addEventListener('pointerup',()=>go());
 cv.addEventListener('pointercancel',()=>{charge=null});
 const pf=$('pf'),pv=$('pv'),T0=1600;let charge=null,aimX=180,shown=0;
@@ -240,7 +242,7 @@ document.querySelector('.lw').addEventListener('pointerdown',dismiss);
 const toX=e=>{const r=cv.getBoundingClientRect();return Math.max(28,Math.min(332,(e.clientX-r.left)/r.width*W))};
 const go=()=>{if(charge){const v=5+8*Math.min(1,(performance.now()-charge.t)/T0),x=aimX;charge=null;shown=0;throwBall(x,v)}};
 const meter=()=>{const p=charge?Math.min(1,(performance.now()-charge.t)/T0):0;pf.style.width=p*100+'%';pv.textContent=charge?Math.round((5+8*p)*2.8)+' km/h':''};
-cv.addEventListener('keydown',e=>{if(state===3){if(['Enter',' ','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();dismiss()}return}if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();aimX=Math.max(28,Math.min(332,aimX+(e.key==='ArrowLeft'?-14:14)));showToast('Ziel',aimX<150?'links':aimX>210?'rechts':'Mitte')}else if((e.key==='Enter'||e.key===' ')&&!e.repeat&&!state){e.preventDefault();toast.classList.remove('on');charge={t:performance.now()}}});
+cv.addEventListener('keydown',e=>{if(state===3){if(['Enter',' ','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();dismiss()}return}if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();aimX=Math.max(28,Math.min(332,aimX+(e.key==='ArrowLeft'?-14:14)));showToast('Ziel',aimX<150?'links':aimX>210?'rechts':'Mitte')}else if((e.key==='Enter'||e.key===' ')&&!e.repeat&&!state){e.preventDefault();if(gameOver){restart();return}toast.classList.remove('on');charge={t:performance.now()}}});
 cv.addEventListener('keyup',e=>{if(e.key==='Enter'||e.key===' ')go()});
 rack();newGame();requestAnimationFrame(loop);
 })();
