@@ -13,7 +13,7 @@
     {
       "name": "Rainy",
       "rolle": "Der Capt’n",
-      "text": "Trägt die Verantwortung und sorgt für die gute Laune.",
+      "text": "Trägt die Verantwortung. Und meistens auch den Rest des Teams.",
       "kugel": [
         "#ffb066",
         "#ff7a1a",
@@ -142,23 +142,22 @@
   "sprueche": {
     "strike": {
       "any": [
-        "Strike! So geht Bowling!",
-        "Strike! So geht Bowling... Punkt.. ch!",
-        "Strike! Rainy meldet es sofort dem Turnierleiter."
+        "So geht Bowling!",
+        "So geht Bowling... Punkt.. ch!"
       ],
       "schnell": [
         "Vollgas! Die Pins hatten keine Chance.",
-        "Strike! Hat die Wand gehalten?"
+        "Hat die Wand gehalten?"
       ],
       "sanft": [
-        "Strike im Schritttempo. Die Pins sind freiwillig aus langeweile umgefallen."
+        "Strike im Schritttempo. Die Pins sind freiwillig aus Langeweile umgefallen."
       ]
     },
     "rinne1": {
       "any": [
         "Der Feenstaub war wohl leer.",
         "Rinne. Die Bahn war schuld.",
-        "Direkt in die Rinne. Sehr mutig."
+        "Direkt in die Rinne. Mutig."
       ],
       "schnell": [
         "Viel Tempo, wenig Richtung. Rinne."
@@ -170,7 +169,6 @@
     "luft1": {
       "any": [
         "Nichts getroffen. Die Pins bleiben stehen und lachen.",
-        "Kein Treffer. Die Pins feiern ihre Standhaftigkeit.",
         "Ein Spare ist noch möglich."
       ],
       "schnell": [
@@ -206,8 +204,8 @@
     },
     "mitte1": {
       "any": [
-        "Ab durch die Mitte. Die Aussenpins warten gespannt auf den zweiten Wurf.",
-        "Die Mitte ist frei."
+        "Ab durch die Mitte. Die Aussenpins schauen gespannt auf den zweiten Wurf.",
+        "So, die Mitte wäre frei."
       ]
     },
     "viel1": {
@@ -235,24 +233,24 @@
     },
     "spare": {
       "any": [
-        "Spare! So geht Bowling!",
-        "Spare! Geht doch.",
-        "Spare. Die letzten Pins hatten keine Chance."
+        "So geht Bowling!",
+        "Geht doch.",
+        "Die letzten Pins hatten keine Chance."
       ],
       "schnell": [
-        "Spare mit Tempo. Das haben die Pins nicht kommen sehen."
+        "Mit Tempo. Das haben die Pins nicht kommen sehen."
       ],
       "sanft": [
-        "Spare, ganz sanft. Der letzte Pin ist fast freiwillig gefallen."
+        "Ganz sanft. Der letzte Pin ist fast freiwillig gefallen."
       ]
     },
     "rinne2": {
       "any": [
-        "Rinne im zweiten Wurf. Das Spare ist weg.",
+        "Rinne im zweiten Wurf. Der Spare ist weg.",
         "Die Rinne hat den Rest erledigt."
       ],
       "schnell": [
-        "Zu viel Tempo, zu wenig Bahn. Das Spare ist weg."
+        "Zu viel Tempo, zu wenig Bahn. Der Spare ist weg."
       ]
     },
     "luft2": {
