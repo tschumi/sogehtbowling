@@ -9,9 +9,14 @@ index.html        Seitengerüst (Navigation, Abschnitte, Spiel-Bereich)
 content.json      Alle Inhalte, die sich ändern: Team, Turnier, Geschichte, Sprüche
 css/styles.css    Gestaltung (Farben, Schriften, Layout, Animationen)
 js/site.js        Lädt content.json, Countdown, Intro, Navigation
-js/game.js        Das Bowling-Spiel (Physik, Pinsetter, Comic-Meldungen)
+js/rules.js       Spielregeln ohne Grafik: offizielle Zählung, Frame-Ablauf, Spruchauswahl
+js/comics.js      Comic-Einblendungen: Sprechblase, Spare-, Strike- und Abschluss-Stern
+js/game.js        Das Bowling-Spiel (Physik, Pinsetter, Spielstand-Tafel)
 assets/logo.svg   Logo inkl. funkelndem Feenstaub
+tests/            Automatische Tests und Vorschau aller Sprüche (siehe „Tests“)
 ```
+
+Das Spiel zählt nach den offiziellen Regeln: 10 Frames, Strike = 10 plus die nächsten zwei Würfe, Spare = 10 plus der nächste Wurf, im 10. Frame bis zu drei Würfe. Oben im Spiel steht die übliche Bowling-Tafel. Nach dem 10. Frame zeigt ein Abschluss-Stern die Punktzahl, ein Tipp startet ein neues Spiel.
 
 ## Inhalte pflegen
 
@@ -24,7 +29,14 @@ Fast alles, was sich ändert, steht in **`content.json`**. HTML oder JavaScript 
   {"rang": 5, "liga": "Europa League", "datum": "Samstag, 20. März 2027", "turnier_nr": 21, "witz": "Euer Spruch."},
   ```
   Ränge 1 bis 3 werden automatisch hervorgehoben.
-- **Sprüche im Spiel:** Unter `sprueche`, pro Situation (z.B. `strike`, `spare`, `rinne1`) drei Töpfe: `any` (immer möglich), `schnell` (harter Wurf), `sanft` (weicher Wurf). `{rest}` wird durch die Zahl der stehenden Pins ersetzt („zwei“, „drei“ …).
+- **Sprüche im Spiel:** Unter `sprueche`, pro Situation drei Töpfe: `any` (immer möglich, mindestens ein Spruch), `schnell` (harter Wurf), `sanft` (weicher Wurf). Derselbe Spruch kommt nie zweimal hintereinander.
+  - Situationen beim ersten Wurf: `strike`, `rinne1`, `luft1` (nichts getroffen), `wenig1`, `mittel1`, `viel1`, `neun1`, `mitte1` (nur die Aussenpins stehen)
+  - beim zweiten Wurf: `spare`, `rinne2`, `luft2`, `knapp2` (einer bleibt stehen), `rest2gut`, `rest2mittel`, `rest2schwach`
+  - letzter Wurf im 10. Frame auf neue Pins: `ende0`, `ende_wenig`, `ende_viel`
+  - `{rest}` wird durch die Zahl der stehenden Pins ersetzt („zwei“, „drei“ …). Nur dort verwenden, wo mindestens zwei Pins stehen, sonst entsteht „einer sind …“.
+  - Strike- und Spare-Sprüche nicht mit „Strike!“ oder „Spare!“ beginnen, der Titel steht schon gross im Stern.
+  - Schweizer Schreibweise: „ss“ statt „ß“.
+- **Bewertung am Spielende:** Unter `endwertung` eine Liste mit Punktgrenze und Text, z.B. `{"ab": 150, "text": "Starkes Spiel."}`. Es gilt der höchste Eintrag, dessen `ab` erreicht ist. Die Liste beginnt bei 0 und ist aufsteigend.
 
 Wichtig beim Bearbeiten: Texte in `"Anführungszeichen"`, Kommas zwischen Einträgen, kein Komma nach dem letzten Eintrag. Wer unsicher ist, prüft die Datei kurz auf [jsonlint.com](https://jsonlint.com).
 
@@ -38,7 +50,23 @@ python3 -m http.server 8000
 
 und `http://localhost:8000` öffnen.
 
-**Test-Modus:** Mit `?test` in der Adresse (`http://localhost:8000/?test`) gibt es Tasten für den nächsten Wurf: **X** = Strike, **S** = Spare, **R** = Rinne. Ohne `?test` sind die Tasten aus.
+**Test-Modus:** Mit `?test` in der Adresse (`http://localhost:8000/?test`) gibt es Tasten für den nächsten Wurf: **X** = Strike, **S** = Spare, **R** = Rinne. Oben rechts auf der Bahn steht die Bildrate (fps). Ohne `?test` ist beides aus.
+
+**Vorschau aller Sprüche:** `http://localhost:8000/tests/vorschau.html` zeigt jeden Spruch aus `content.json` in seiner echten Einblendung. Rot markiert = Text passt nicht in die Form, gelb = Schrift musste auf die Mindestgrösse schrumpfen. Praktisch nach dem Bearbeiten der Sprüche.
+
+## Tests
+
+Die Tests brauchen nur [Node.js](https://nodejs.org) (ab Version 18), keine Zusatzpakete. Im Projektordner:
+
+```
+node --test
+```
+
+- `tests/rules.test.js`: Zählung (ganze Spiele inkl. 300 und Sonderfälle im 10. Frame), Frame-Ablauf, Wahl der Spruchgruppe, Spruchauswahl, Bewertung
+- `tests/content.test.js`: prüft `content.json` auf typische Bearbeitungsfehler (fehlende oder falsch geschriebene Gruppen, leere oder doppelte Sprüche, `{rest}` an falscher Stelle, „Strike!“ am Anfang, „ß“, Lücken in `endwertung`). Die Meldungen nennen Gruppe und Spruch.
+- `tests/layout.test.js`: öffnet die Vorschau in Chrome im Hintergrund und schlägt fehl, wenn ein Spruch nicht in seine Einblendung passt. Speichert dabei ein Bild aller Einblendungen unter `tests/vorschau.png` (nicht im Repository). Ohne Chrome wird dieser Test übersprungen, ein anderer Pfad geht mit `CHROME_PATH=/pfad/zu/chrome node --test`.
+
+Am besten vor jedem Veröffentlichen laufen lassen, vor allem nach Änderungen an `content.json`.
 
 ## Veröffentlichen mit GitHub Pages
 
