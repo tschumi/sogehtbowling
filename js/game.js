@@ -369,10 +369,14 @@ const release=()=>{
  const v=5+8*chargeLevel(),x=aimX;
  charge=null;throwBall(x,v);
 };
+/* Im Balken: beim Laden das Tempo, sonst „Bereit“, sobald geworfen werden kann */
+const powerBar=powerFill.parentElement;
+let meterText='';
 const updateMeter=()=>{
- const p=chargeLevel();
+ const p=chargeLevel(),ready=!charge&&state===READY&&!gameOver;
+ const text=charge?Math.round((5+8*p)*2.8)+' km/h':ready?'Bereit':'';
  powerFill.style.width=p*100+'%';
- powerValue.textContent=charge?Math.round((5+8*p)*2.8)+' km/h':'';
+ if(text!==meterText){powerValue.textContent=meterText=text;powerBar.classList.toggle('ready',ready)}
 };
 /* nach Spielende: erster Klick/Tipp schliesst die Meldung und startet ein neues Spiel, wirft aber nicht */
 const restart=()=>{newGame();toast.classList.remove('on');hideOverlays()};
