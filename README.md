@@ -93,4 +93,8 @@ Jede gespeicherte Änderung (auch direkt im Browser auf github.com, z.B. an `con
 
 ## Schriften
 
-Die Google Fonts Schriften (Bowlby One, Space Grotesk, Yellowtail) sind lokal unter `assets/fonts/` abgelegt.
+Die Google Fonts Schriften (Bowlby One, Space Grotesk, Yellowtail) sind mit den eigenen Lizenzen lokal unter `assets/fonts/` abgelegt.
+
+## Copyright
+
+© 2026 Daniel Tschumi, sogehtbowling.ch
