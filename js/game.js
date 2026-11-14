@@ -48,7 +48,8 @@ function throwBall(tx,pwr){
  else if(cheat==='s2'&&pins.length<10){cheat=0;pins.forEach(p=>{p.d=true;p.r=R(-1,1)})}ball={x:180,y:H-36,vx:(tx-180)/N+R(-AN,AN)*v/9,vy:-v,h:R(-HK,HK),hk:.0006*9/v,c:0,a:0,g:false};
  }
 function newGame(){frames=Array.from({length:10},()=>[]);rd=1;ballNo=1;gameOver=false;renderSheet();renderDots()}
-function renderDots(){const d=document.querySelector('.dots');d.classList.toggle('three',rd===10&&ballNo===3);d.querySelectorAll('i').forEach((x,i)=>x.classList.toggle('on',i<ballNo))}
+/* Wurf-Punkte: im 10. Frame erscheint der dritte Punkt, sobald der Bonuswurf verdient ist (Strike oder Spare) */
+function renderDots(){const d=document.querySelector('.dots'),r=frames[9]||[],bonus=r[0]===10||r[0]+r[1]>=10;d.classList.toggle('three',rd===10&&!gameOver&&(ballNo===3||bonus));d.querySelectorAll('i').forEach((x,i)=>x.classList.toggle('on',i<ballNo))}
 function renderSheet(){
  const sc=scores(frames),cur=gameOver?-1:rd-1;
  $('sheet').innerHTML=frames.map((r,f)=>'<div class="fr'+(f===cur?' cur':'')+(f===9?' f10':'')+'"><span class="n">'+(f+1)+'</span><span class="bx">'+marks(r,f).map(x=>'<i>'+x+'</i>').join('')+'</span><b>'+(sc[f]===null?'':sc[f])+'</b></div>').join('');
