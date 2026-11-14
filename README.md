@@ -11,7 +11,8 @@ css/styles.css    Gestaltung (Farben, Schriften, Layout, Animationen)
 js/site.js        Lädt content.json, Countdown, Intro, Navigation
 js/rules.js       Spielregeln ohne Grafik: offizielle Zählung, Frame-Ablauf, Spruchauswahl
 js/comics.js      Comic-Einblendungen: Sprechblase, Spare-, Strike- und Abschluss-Stern
-js/game.js        Das Bowling-Spiel (Physik, Pinsetter, Spielstand-Tafel)
+js/physics.js     Physik ohne Grafik: Kugel, Pins, Zusammenstösse, Einstellungen
+js/game.js        Das Bowling-Spiel: Ablauf eines Wurfs, Pinsetter, Zeichnen, Eingabe
 assets/logo.svg   Logo inkl. funkelndem Feenstaub
 tests/            Automatische Tests und Vorschau aller Sprüche (siehe „Tests“)
 ```
@@ -40,6 +41,16 @@ Fast alles, was sich ändert, steht in **`content.json`**. HTML oder JavaScript 
 
 Wichtig beim Bearbeiten: Texte in `"Anführungszeichen"`, Kommas zwischen Einträgen, kein Komma nach dem letzten Eintrag. Wer unsicher ist, prüft die Datei kurz auf [jsonlint.com](https://jsonlint.com).
 
+## Schwierigkeit anpassen
+
+Alle Werte für das Spielgefühl stehen oben in **`js/physics.js`** im Block `TUNING`, jeder mit einem kurzen Kommentar. Die wichtigsten:
+
+- `pinImpulse`: Stoss von Pin zu Pin, der Hauptregler für die Strike-Quote. Schon ±0.01 ist spürbar.
+- `pocketCarry` / `headOnCarry`: Bonus für einen Treffer in die Tasche (knapp neben den vordersten Pin) bzw. Abzug für einen frontalen Treffer.
+- `aimNoise` / `hookNoise`: wie stark der Zufall den Wurf ablenkt.
+
+Nach einer Änderung `node --test` laufen lassen: `tests/physics.test.js` wirft ein paar tausend simulierte Kugeln und meldet die aktuelle Strike-Quote. Er schlägt fehl, wenn das Spiel deutlich zu leicht oder zu schwer wird oder die Tasche sich nicht mehr lohnt.
+
 ## Lokal testen
 
 `content.json` wird per `fetch` geladen. Das funktioniert nicht, wenn man `index.html` direkt per Doppelklick öffnet. Stattdessen im Ordner einen kleinen Server starten:
@@ -63,6 +74,7 @@ node --test
 ```
 
 - `tests/rules.test.js`: Zählung (ganze Spiele inkl. 300 und Sonderfälle im 10. Frame), Frame-Ablauf, Wahl der Spruchgruppe, Spruchauswahl, Bewertung
+- `tests/physics.test.js`: Aufstellung, Rinnenwurf, gleicher Zufall ergibt gleichen Wurf, und eine Simulation der Spielbarkeit (Strike-Quote in der Tasche zwischen 25 und 55 %, Tasche besser als die Mitte)
 - `tests/content.test.js`: prüft `content.json` auf typische Bearbeitungsfehler (fehlende oder falsch geschriebene Gruppen, leere oder doppelte Sprüche, `{rest}` an falscher Stelle, „Strike!“ am Anfang, „ß“, Lücken in `endwertung`). Die Meldungen nennen Gruppe und Spruch.
 - `tests/layout.test.js`: öffnet die Vorschau in Chrome im Hintergrund und schlägt fehl, wenn ein Spruch nicht in seine Einblendung passt. Speichert dabei ein Bild aller Einblendungen unter `tests/vorschau.png` (nicht im Repository). Ohne Chrome wird dieser Test übersprungen, ein anderer Pfad geht mit `CHROME_PATH=/pfad/zu/chrome node --test`.
 
