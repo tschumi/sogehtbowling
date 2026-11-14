@@ -327,8 +327,20 @@ function drawParticles(){
  particles.forEach(p=>{ctx.fillStyle=p.w?'rgba(255,255,255,'+p.l+')':'rgba(255,170,60,'+p.l+')';drawStar(p.x,p.y,p.s*p.l/2)});
 }
 
+/* Ziellinie: gestrichelter Weg von der Startposition zum Ziel, solange gezielt wird */
+function drawAim(){
+ if(!charge&&!(keyAim&&state===READY))return;
+ const x=aimTarget(),y=HEAD_Y+24;
+ ctx.save();
+ ctx.strokeStyle='rgba(255,122,26,.75)';ctx.lineWidth=2;ctx.setLineDash([6,8]);
+ ctx.beginPath();ctx.moveTo(MID,H-36);ctx.lineTo(x,y);ctx.stroke();
+ ctx.setLineDash([]);ctx.beginPath();ctx.arc(x,y,7,0,7);ctx.stroke();
+ ctx.restore();
+}
+
 function draw(){
  drawLane();
+ drawAim();
  lane.pins.forEach(drawPin);
  drawTable();
  drawRake();
@@ -355,19 +367,32 @@ function loop(ts){
 }
 
 /* ========== Eingabe ==========
-   Drücken = zielen, Halten = Wucht aufbauen (max. nach 1.6 s), Loslassen = werfen.
+   Drücken = zielen, Halten = der Stärkebalken pendelt zwischen 0 und 100 %, Loslassen = werfen.
+   Solange man hält, zittert der Zielpunkt leicht, bei viel Stärke mehr.
    Tastatur: Pfeile zielen, Enter/Leertaste halten und loslassen. */
 
-const CHARGE_MS=1600;
 const powerFill=$('pf'),powerValue=$('pv');
-let charge=null,aimX=MID;
+let charge=null,aimX=MID,keyAim=false;
 
 const toLaneX=e=>{const r=canvas.getBoundingClientRect();return Math.max(28,Math.min(332,(e.clientX-r.left)/r.width*W))};
-const chargeLevel=()=>charge?Math.min(1,(performance.now()-charge.t)/CHARGE_MS):0;
+const startCharge=()=>{charge={t:performance.now(),phase:Math.random()*100}};
+/* Stärke 0–1: läuft hoch, dann wieder runter (Dreieck) */
+const chargeLevel=()=>{
+ if(!charge)return 0;
+ const s=((performance.now()-charge.t)/TUNING.powerSweepMs)%2;
+ return s<=1?s:2-s;
+};
+/* Zittern: unregelmässige Mischung zweier Schwingungen, Stärke wächst mit der Wucht */
+const wobble=()=>{
+ if(!charge)return 0;
+ const t=(performance.now()-charge.t)/1000+charge.phase,p=chargeLevel();
+ return TUNING.aimWobble*(.35+.65*p*p)*(Math.sin(t*5.3)+.6*Math.sin(t*8.9+1.7))/1.6;
+};
+const aimTarget=()=>Math.max(28,Math.min(332,aimX+wobble()));
 const release=()=>{
  if(!charge)return;
- const v=5+8*chargeLevel(),x=aimX;
- charge=null;throwBall(x,v);
+ const v=5+8*chargeLevel(),x=aimTarget();
+ charge=null;keyAim=false;throwBall(x,v);
 };
 /* Im Balken: beim Laden das Tempo, sonst „Bereit“, sobald geworfen werden kann */
 const powerBar=powerFill.parentElement;
@@ -386,7 +411,7 @@ canvas.addEventListener('pointerdown',e=>{
  e.preventDefault();
  if(gameOver){restart();return}
  try{canvas.setPointerCapture(e.pointerId)}catch(_){}
- aimX=toLaneX(e);charge={t:performance.now()};
+ aimX=toLaneX(e);startCharge();
  toast.classList.remove('on');hideOverlays();
 });
 canvas.addEventListener('pointerup',release);
@@ -400,12 +425,12 @@ canvas.addEventListener('keydown',e=>{
  }
  if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
   e.preventDefault();
-  aimX=Math.max(28,Math.min(332,aimX+(e.key==='ArrowLeft'?-14:14)));
+  aimX=Math.max(28,Math.min(332,aimX+(e.key==='ArrowLeft'?-14:14)));keyAim=true;
   showToast('Ziel',aimX<150?'links':aimX>210?'rechts':'Mitte');
  }else if((e.key==='Enter'||e.key===' ')&&!e.repeat&&state===READY){
   e.preventDefault();
   if(gameOver){restart();return}
-  toast.classList.remove('on');charge={t:performance.now()};
+  toast.classList.remove('on');startCharge();
  }
 });
 canvas.addEventListener('keyup',e=>{if(e.key==='Enter'||e.key===' ')release()});

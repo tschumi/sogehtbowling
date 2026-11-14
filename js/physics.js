@@ -25,13 +25,17 @@ const TUNING={
  /* Pin-Action */
  pinFriction:.965,   // Bremsung der Pins pro Schritt (höher = Pins rutschen weiter)
  ballImpulse:.75,    // Stoss der Kugel auf einen Pin
- pinImpulse:1.08,    // Stoss von Pin zu Pin. Wichtigster Regler für die Strike-Quote: ±0.01 ist spürbar
+ pinImpulse:1.07,    // Stoss von Pin zu Pin. Wichtigster Regler für die Strike-Quote: ±0.01 ist spürbar
  pocketCarry:1.08,   // Bonus auf den Pin-Stoss, wenn die Kugel den vordersten Pin seitlich trifft (Tasche)
  headOnCarry:.95,    // Abzug, wenn die Kugel den vordersten Pin frontal trifft (gibt oft Splits)
 
  /* Zufall beim Wurf */
  aimNoise:.1,        // seitliche Streuung
- hookNoise:.006      // leichte zufällige Kurve
+ hookNoise:.007,     // leichte zufällige Kurve
+
+ /* Können beim Wurf (Eingabe, siehe game.js) */
+ powerSweepMs:1300,  // so lange läuft der Stärkebalken von 0 auf 100 %, danach pendelt er zurück
+ aimWobble:20        // Zittern des Zielpunkts bei voller Stärke (bei wenig Stärke rund ein Drittel davon)
 };
 
 /* Feste Masse der Bahn */

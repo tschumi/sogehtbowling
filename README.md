@@ -48,6 +48,8 @@ Alle Werte für das Spielgefühl stehen oben in **`js/physics.js`** im Block `TU
 - `pinImpulse`: Stoss von Pin zu Pin, der Hauptregler für die Strike-Quote. Schon ±0.01 ist spürbar.
 - `pocketCarry` / `headOnCarry`: Bonus für einen Treffer in die Tasche (knapp neben den vordersten Pin) bzw. Abzug für einen frontalen Treffer.
 - `aimNoise` / `hookNoise`: wie stark der Zufall den Wurf ablenkt.
+- `powerSweepMs`: Tempo des pendelnden Stärkebalkens (kleiner = schneller = schwieriger).
+- `aimWobble`: wie stark der Zielpunkt beim Halten zittert. Bei voller Stärke am meisten, bei wenig Stärke etwa ein Drittel.
 
 Nach einer Änderung `node --test` laufen lassen: `tests/physics.test.js` wirft ein paar tausend simulierte Kugeln und meldet die aktuelle Strike-Quote. Er schlägt fehl, wenn das Spiel deutlich zu leicht oder zu schwer wird oder die Tasche sich nicht mehr lohnt.
 
