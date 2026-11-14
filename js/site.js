@@ -54,3 +54,11 @@ const set=on=>{document.body.classList.toggle('play',on);(on?x:b).focus()};
 b.addEventListener('click',()=>set(true));x.addEventListener('click',()=>set(false));
 addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('play'))set(false)});
 })();
+/* Hamburger-Menü (nur auf schmalen Bildschirmen sichtbar) */
+(()=>{const nav=document.querySelector('.nav'),b=nav&&nav.querySelector('.burger');if(!b)return;
+const set=on=>{nav.classList.toggle('open',on);b.setAttribute('aria-expanded',String(on));b.setAttribute('aria-label',on?'Menü schliessen':'Menü')};
+b.addEventListener('click',()=>set(!nav.classList.contains('open')));
+nav.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',()=>set(false)));
+document.addEventListener('click',e=>{if(nav.classList.contains('open')&&!nav.contains(e.target))set(false)});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&nav.classList.contains('open')){set(false);b.focus()}});
+})();
