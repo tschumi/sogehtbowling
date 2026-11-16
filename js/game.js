@@ -135,8 +135,8 @@ function newGame(){
  renderSheet();renderDots();
 }
 
-/* Wurf starten: tx = Ziel-x, pwr = Tempo (5 bis 13) */
-function throwBall(tx,pwr){
+/* Wurf starten: tx = Ziel-x, pwr = Tempo (5 bis 13), sx = Start-x */
+function throwBall(tx,pwr,sx=MID){
  if(state!==READY)return;
  if(gameOver)newGame();
  state=ROLLING;settle=0;
@@ -144,8 +144,8 @@ function throwBall(tx,pwr){
  tx=Math.max(28,Math.min(332,tx));
  const v=lastV=pwr||9;
  applyCheat();
- if(cheat==='r'){cheat=0;tx=40}
- lane.launch(tx,v);
+ if(cheat==='r'){cheat=0;tx=40;sx=MID}
+ lane.launch(tx,v,sx);
 }
 
 /* Wurf auswerten, sobald alles ruhig ist: Punkte eintragen, Spruch zeigen, Pinsetter einplanen */
@@ -358,7 +358,7 @@ function drawRake(){
 }
 
 function drawBall(){
- const b=lane.ball;if(!b)return;
+ const b=lane.ball||handBall();if(!b)return;
  const q=ctx.createRadialGradient(b.x-BR/3,b.y-BR/3,BR/6,b.x,b.y,BR);
  q.addColorStop(0,b.g?'#9a6a3a':'#ff9448');q.addColorStop(.65,b.g?'#7a4a1a':'#ff7a1a');q.addColorStop(1,b.g?'#6a3d14':'#e8690f');
  ctx.fillStyle=q;ctx.beginPath();ctx.arc(b.x,b.y,BR,0,7);ctx.fill();
@@ -381,11 +381,12 @@ function drawParticles(){
 
 /* Ziellinie: gestrichelter Weg von der Startposition zum Ziel, solange gezielt wird */
 function drawAim(){
+ if(sling){drawSling();return}
  if(!charge&&!(keyAim&&state===READY))return;
  const x=aimTarget(),y=HEAD_Y+24;
  ctx.save();
  ctx.strokeStyle='rgba(255,122,26,.75)';ctx.lineWidth=2;ctx.setLineDash([6,8]);
- ctx.beginPath();ctx.moveTo(MID,H-36);ctx.lineTo(x,y);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(startX(),H-36);ctx.lineTo(x,y);ctx.stroke();
  ctx.setLineDash([]);ctx.beginPath();ctx.arc(x,y,7,0,7);ctx.stroke();
  ctx.restore();
 }
@@ -444,30 +445,105 @@ const aimTarget=()=>Math.max(28,Math.min(332,aimX+wobble()));
 const release=()=>{
  if(!charge)return;
  const v=5+8*chargeLevel(),x=aimTarget();
- charge=null;keyAim=false;throwBall(x,v);
+ charge=null;keyAim=false;throwBall(x,v,startX());
 };
 /* Im Balken: beim Laden das Tempo, sonst „Bereit“, sobald geworfen werden kann */
 const powerBar=powerFill.parentElement;
 let meterText='';
 const updateMeter=()=>{
- const p=chargeLevel(),ready=!charge&&state===READY&&!gameOver;
- const text=charge?Math.round((5+8*p)*2.8)+' km/h':ready?'Bereit':'';
+ const p=sling?slingLevel():chargeLevel(),busy=charge||sling,ready=!busy&&state===READY&&!gameOver;
+ const text=busy?Math.round((5+8*p)*2.8)+' km/h':ready?'Bereit':'';
  powerFill.style.width=p*100+'%';
  if(text!==meterText){powerValue.textContent=meterText=text;powerBar.classList.toggle('ready',ready)}
 };
 /* nach Spielende: erster Klick/Tipp schliesst die Meldung und startet ein neues Spiel, wirft aber nicht */
 const restart=()=>{newGame();toast.classList.remove('on');hideOverlays()};
 
+/* ---------- PROTOTYP Steinschleuder (nur mit ?schleuder) ----------
+   Irgendwo auf der Bahn drücken und nach hinten ziehen: Die Kugel zielt in die Gegenrichtung,
+   die Länge des Zugs bestimmt die Wucht. Eine kurze Linie zeigt Richtung und Wucht, bei viel Wucht zittert sie.
+   Loslassen wirft. Zu kurz gezogen = abgebrochen.
+   Startposition: Die Kugel selbst anfassen und seitlich ziehen, sie bleibt dort auch für die nächsten Würfe.
+   Doppeltipp auf die Kugel stellt sie zurück in die Mitte. Tastatur: Umschalt + Pfeile. */
+const SLING=new URLSearchParams(location.search).has('schleuder');
+const BALL_Y=P.BALL_START_Y,SPOT_MIN=84,SPOT_MAX=276,GRAB=30; // GRAB: Trefferzone um die Kugel (Bahn-Einheiten)
+let sling=null;   // {sx,sy,x,y,t,phase} in Bahn-Koordinaten
+let spotX=MID;    // Startposition der Kugel
+let moving=null;  // {dx} solange die Kugel verschoben wird
+let lastBallTap=0;
+const startX=()=>SLING?spotX:MID;
+const setSpot=x=>{spotX=Math.max(SPOT_MIN,Math.min(SPOT_MAX,x))};
+const onBall=p=>Math.hypot(p.x-spotX,p.y-BALL_Y)<GRAB;
+const toLane=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H}};
+/* Kugel liegt bereit, solange geworfen werden kann */
+function handBall(){
+ if(!SLING||state!==READY||gameOver)return null;
+ return {x:spotX,y:BALL_Y,a:0,g:false};
+}
+/* Zug: Länge (0–1 = Wucht) und Ziel-x; null, solange nicht nach hinten gezogen */
+function slingShot(){
+ const dx=sling.x-sling.sx,dy=sling.y-sling.sy,len=Math.hypot(dx,dy);
+ if(dy<=0||len<TUNING.slingMin)return null;
+ const p=Math.min(1,len/TUNING.slingPull);
+ const t=(performance.now()-sling.t)/1000+sling.phase;
+ const wob=TUNING.slingWobble*p*p*(Math.sin(t*5.3)+.6*Math.sin(t*8.9+1.7))/1.6;
+ const tx=spotX-dx/dy*(BALL_Y-HEAD_Y)*TUNING.slingAim+wob;
+ return {p,tx:Math.max(28,Math.min(332,tx))};
+}
+const slingLevel=()=>{const s=sling&&slingShot();return s?s.p:0};
+function slingRelease(){
+ const s=slingShot();sling=null;
+ if(s)throwBall(s.tx,5+8*s.p,spotX);
+}
+/* Linie ab der Kugel Richtung Ziel, Länge zeigt die Wucht */
+function drawSling(){
+ const s=sling&&slingShot();if(!s)return;
+ const ty=HEAD_Y+24,dx=s.tx-spotX,dy=ty-BALL_Y,d=Math.hypot(dx,dy),len=50+170*s.p;
+ const ex=spotX+dx/d*len,ey=BALL_Y+dy/d*len;
+ ctx.save();
+ ctx.strokeStyle='rgba(255,122,26,.85)';ctx.lineWidth=3;ctx.setLineDash([6,7]);
+ ctx.beginPath();ctx.moveTo(spotX,BALL_Y);ctx.lineTo(ex,ey);ctx.stroke();
+ ctx.setLineDash([]);ctx.fillStyle='rgba(255,122,26,.85)';
+ const ux=dx/d,uy=dy/d;
+ ctx.beginPath();ctx.moveTo(ex+ux*10,ey+uy*10);ctx.lineTo(ex-uy*6,ey+ux*6);ctx.lineTo(ex+uy*6,ey-ux*6);ctx.fill();
+ /* Gummiband von der Kugel zum Finger */
+ ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(spotX,BALL_Y);ctx.lineTo(spotX+(sling.x-sling.sx),BALL_Y+(sling.y-sling.sy));ctx.stroke();
+ ctx.restore();
+}
+if(SLING){
+ document.querySelector('.hint .hl').textContent='Auf die Bahn klicken und mit gedrückter Maustaste nach hinten ziehen wie eine Steinschleuder. Weiter ziehen gibt mehr Wucht. Loslassen wirft. Die Kugel selbst lässt sich seitlich verschieben.';
+ document.querySelector('.hint .hs').textContent='Nach hinten ziehen wie eine Steinschleuder, loslassen wirft. Kugel seitlich ziehen zum Platzieren.';
+}
+
 canvas.addEventListener('pointerdown',e=>{
  if(state!==READY)return;
  e.preventDefault();
  if(gameOver){restart();return}
  try{canvas.setPointerCapture(e.pointerId)}catch(_){}
- aimX=toLaneX(e);startCharge();
  toast.classList.remove('on');hideOverlays();
+ if(SLING){
+  const p=toLane(e);
+  if(onBall(p)){
+   /* Doppeltipp: zurück in die Mitte */
+   if(performance.now()-lastBallTap<350){setSpot(MID);lastBallTap=0;return}
+   lastBallTap=performance.now();
+   moving={dx:p.x-spotX};return;
+  }
+  sling={sx:p.x,sy:p.y,x:p.x,y:p.y,t:performance.now(),phase:Math.random()*100};return;
+ }
+ aimX=toLaneX(e);startCharge();
 });
-canvas.addEventListener('pointerup',release);
-canvas.addEventListener('pointercancel',()=>{charge=null});
+canvas.addEventListener('pointermove',e=>{
+ if(sling)Object.assign(sling,toLane(e));
+ else if(moving)setSpot(toLane(e).x-moving.dx);
+ else if(SLING&&e.pointerType==='mouse')canvas.style.cursor=state===READY&&onBall(toLane(e))?'grab':'';
+});
+canvas.addEventListener('pointerup',e=>{
+ if(moving){moving=null;return}
+ if(sling){Object.assign(sling,toLane(e));slingRelease()}else release();
+});
+canvas.addEventListener('pointercancel',()=>{charge=null;sling=null;moving=null});
 laneWrap.addEventListener('pointerdown',dismiss);
 
 canvas.addEventListener('keydown',e=>{
@@ -475,7 +551,9 @@ canvas.addEventListener('keydown',e=>{
   if(['Enter',' ','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();dismiss()}
   return;
  }
- if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
+ if(SLING&&e.shiftKey&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
+  e.preventDefault();setSpot(spotX+(e.key==='ArrowLeft'?-12:12));
+ }else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
   e.preventDefault();
   aimX=Math.max(28,Math.min(332,aimX+(e.key==='ArrowLeft'?-14:14)));keyAim=true;
   showToast('Ziel',aimX<150?'links':aimX>210?'rechts':'Mitte');

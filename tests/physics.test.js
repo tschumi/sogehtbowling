@@ -13,22 +13,23 @@ function seeded(seed){
 function gauss(rand){let u=0,v=0;while(!u)u=rand();while(!v)v=rand();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
 
 /* Ein Wurf auf zehn frische Pins, bis alles ruhig ist (wie im Spiel: 20 Schritte ohne Bewegung) */
-function roll(lane,tx,v){
- lane.rack();lane.launch(tx,v);
+function roll(lane,tx,v,sx){
+ lane.rack();lane.launch(tx,v,sx);
  let calm=0,n=0;
  while(calm<=20&&n++<3000){lane.step();calm=lane.moving()?0:calm+1}
  return lane.pins.filter(p=>p.d).length;
 }
 
 /* Strike-Quote für einen Zielpunkt (Abstand zur Mitte, abwechselnd links und rechts).
+   start: Startpunkt der Kugel als Abstand zur Mitte, auf derselben Seite wie das Ziel (negativ = gegenüber).
    Der simulierte Spieler streut beim Zielen etwas und wirft unterschiedlich hart. */
-function strikeRate(offset,throws=800,seed=7){
+function strikeRate(offset,throws=800,seed=7,start=0){
  const rand=seeded(seed),lane=P.createLane({rand});
  let strikes=0;
  for(let i=0;i<throws;i++){
   const side=i%2?1:-1;
   const tx=P.MID+side*offset+gauss(rand)*5,v=Math.max(5,Math.min(13,10+gauss(rand)*1.5));
-  if(roll(lane,tx,v)===10)strikes++;
+  if(roll(lane,tx,v,P.MID+side*start)===10)strikes++;
  }
  return strikes/throws;
 }
@@ -67,7 +68,7 @@ describe('Wurf',()=>{
  });
 });
 
-describe('Spielbarkeit (Simulation mit 800 Würfen pro Zielpunkt)',()=>{
+describe('Spielbarkeit (Simulation mit 800 Würfen pro Zielpunkt und Startpunkt)',()=>{
  const center=strikeRate(0),pocket=strikeRate(10),wide=strikeRate(20);
  const pct=x=>Math.round(x*100)+' %';
  test(`Tasche: Strike-Quote zwischen 25 und 55 % (aktuell ${pct(pocket)})`,()=>{
@@ -82,5 +83,13 @@ describe('Spielbarkeit (Simulation mit 800 Würfen pro Zielpunkt)',()=>{
  });
  test(`auch auf die Mitte bleibt ein Strike möglich (aktuell ${pct(center)})`,()=>{
   assert.ok(center>=.1,'Mitte zu schwer: headOnCarry erhöhen');
+ });
+ const angled=strikeRate(10,800,7,45),crossed=strikeRate(10,800,7,-45);
+ test(`Winkel in die Tasche lohnt sich: Start auf der Taschenseite ${pct(angled)}, aus der Mitte ${pct(pocket)}`,()=>{
+  assert.ok(angled>pocket,'Schräger Einschlag sollte mehr Strikes bringen: TUNING.angleCarry prüfen');
+  assert.ok(angled<=pocket+.15,'Winkelbonus zu stark: TUNING.angleCarry senken');
+ });
+ test(`über die Bahn kreuzend gibt weniger Strikes (${pct(crossed)} gegenüber ${pct(pocket)})`,()=>{
+  assert.ok(crossed<pocket);
  });
 });

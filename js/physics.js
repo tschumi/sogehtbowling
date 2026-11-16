@@ -28,6 +28,9 @@ const TUNING={
  pinImpulse:1.07,    // Stoss von Pin zu Pin. Wichtigster Regler für die Strike-Quote: ±0.01 ist spürbar
  pocketCarry:1.08,   // Bonus auf den Pin-Stoss, wenn die Kugel den vordersten Pin seitlich trifft (Tasche)
  headOnCarry:.95,    // Abzug, wenn die Kugel den vordersten Pin frontal trifft (gibt oft Splits)
+ angleCarry:1.03,    // zusätzlicher Bonus für einen Einschlag in die Tasche mit gutem Winkel (Kugel läuft zur Mitte hin)
+ angleBest:.15,      // bester Winkel (seitlich pro Schritt nach vorne, ≈ 8.5°); Würfe aus der Mitte haben ≈ 0
+ angleWidth:.11,     // wie weit vom besten Winkel es noch einen Bonus gibt
 
  /* Zufall beim Wurf */
  aimNoise:.1,        // seitliche Streuung
@@ -35,7 +38,13 @@ const TUNING={
 
  /* Können beim Wurf (Eingabe, siehe game.js) */
  powerSweepMs:1300,  // so lange läuft der Stärkebalken von 0 auf 100 %, danach pendelt er zurück
- aimWobble:20        // Zittern des Zielpunkts bei voller Stärke (bei wenig Stärke rund ein Drittel davon)
+ aimWobble:20,       // Zittern des Zielpunkts bei voller Stärke (bei wenig Stärke rund ein Drittel davon)
+
+ /* Steinschleuder (PROTOTYP, nur mit ?schleuder) */
+ slingPull:110,      // so weit zurückziehen (Bahn-Einheiten, Bahn = 560 hoch) für volle Wucht
+ slingAim:.6,        // Zugrichtung → Ziel: 1 = Kugel läuft exakt in Gegenrichtung des Zugs, kleiner = gröber/verzeihender
+ slingWobble:14,     // Zittern des Ziels bei voller Wucht (bei wenig Wucht kaum)
+ slingMin:12         // kürzerer Zug gilt als abgebrochen
 };
 
 /* Feste Masse der Bahn */
@@ -44,7 +53,7 @@ const BALL_START_Y=H-36;
 const GUTTER_L=66,GUTTER_R=294;      // Kugel fällt in die Rinne, wenn sie diese Grenzen überschreitet
 const GUTTER_X_L=53,GUTTER_X_R=307;  // x der Kugel in der Rinne
 const WALL_L=44,WALL_R=316,WALL_TOP=16;
-const ASSIST_Y=340;                  // ab hier zieht eine leichte Zielhilfe die Kugel zur Mitte
+const ASSIST_Y=340;                  // ab hier zieht eine leichte Zielhilfe die Kugel Richtung Kopfpin
 
 /* Pin-Plätze: hinterste Reihe zuerst. Jeder Eintrag: [x, y, Pins in der Reihe, Index in der Reihe] */
 const SPOTS=[4,3,2,1].flatMap((n,row)=>Array.from({length:n},(_,i)=>
@@ -79,21 +88,32 @@ function createLane({rand=()=>Math.random(),fx={}}={}){
   p.vx+=ix;p.vy+=iy;p.vr+=ir;
  }
 
- /* Kugel losschicken: tx = Ziel-x auf Höhe der Pins, v = Tempo (5 bis 13) */
- lane.launch=function(tx,v){
+ /* Kugel losschicken: tx = Ziel-x auf Höhe der Pins, v = Tempo (5 bis 13), sx = Start-x (Standard Mitte) */
+ lane.launch=function(tx,v,sx=MID){
   lane.gutter=false;lane.carry=1;
   lane.pins.forEach(p=>{p.bh=false});
   const N=(BALL_START_Y-HEAD_Y-8)/v; // Schritte bis zu den Pins
-  lane.ball={x:MID,y:BALL_START_Y,vx:(tx-MID)/N+R(-T.aimNoise,T.aimNoise)*v/9,vy:-v,
+  lane.ball={x:sx,y:BALL_START_Y,sx,vx:(tx-sx)/N+R(-T.aimNoise,T.aimNoise)*v/9,vy:-v,
    h:R(-T.hookNoise,T.hookNoise),hk:.0006*9/v,c:0,a:0,g:false,v};
  };
+
+ /* Winkelbonus in die Tasche: wie in echt trägt ein Einschlag schräg zur Mitte hin mehr Pins mit.
+    s = seitliche Bewegung Richtung Mitte pro Schritt nach vorne (gerade aus der Mitte ≈ 0, über die Bahn kreuzend < 0) */
+ function angleBonus(ball){
+  const s=-Math.sign(ball.x-MID)*ball.vx/Math.abs(ball.vy),u=(s-T.angleBest)/T.angleWidth;
+  return 1+(T.angleCarry-1)*Math.max(0,1-u*u);
+ }
 
  /* Kugel einen Schritt bewegen und mit Pins zusammenstossen lassen */
  function stepBall(){
   const ball=lane.ball,pins=lane.pins;
   ball.a+=Math.abs(ball.vy)*.06; // Drehung (nur Grafik)
   ball.vx+=ball.h;
-  if(!ball.c&&!ball.g&&ball.y<ASSIST_Y)ball.vx+=(MID-ball.x)*ball.hk;
+  /* Zielhilfe: zieht leicht zur Linie vom Startpunkt zum Kopfpin (Start in der Mitte: zur Mitte) */
+  if(!ball.c&&!ball.g&&ball.y<ASSIST_Y){
+   const lx=ball.sx+(MID-ball.sx)*(BALL_START_Y-ball.y)/(BALL_START_Y-HEAD_Y);
+   ball.vx+=(lx-ball.x)*ball.hk;
+  }
   ball.x+=ball.vx;ball.y+=ball.vy;
   if(!ball.g&&(ball.x<GUTTER_L||ball.x>GUTTER_R)){
    ball.g=true;lane.gutter=true;ball.vx=0;ball.x=ball.x<MID?GUTTER_X_L:GUTTER_X_R;
@@ -105,7 +125,7 @@ function createLane({rand=()=>Math.random(),fx={}}={}){
    if(d>=T.ballPinContact)return;
    /* erster Kontakt auf volle Pins: Tasche (seitlich) oder frontal? */
    const a=Math.abs(dx)/(d||1);
-   if(!ball.c&&pins.length===10&&pins.every(q=>!q.d||q===p))lane.carry=a<.25?T.headOnCarry:a<.75?T.pocketCarry:1;
+   if(!ball.c&&pins.length===10&&pins.every(q=>!q.d||q===p))lane.carry=a<.25?T.headOnCarry:a<.75?T.pocketCarry*angleBonus(ball):1;
    p.bh=true;ball.c=1;
    const nx=d?dx/d:0,ny=d?dy/d:-1,sp=Math.min(10,Math.hypot(ball.vx,ball.vy));
    hit(p,nx*sp*T.ballImpulse+ball.vx*.4+R(-.6,.6)*(sp/9)**2,ny*sp*T.ballImpulse-1+R(-.5,.5),R(-.3,.3));
@@ -161,5 +181,5 @@ function createLane({rand=()=>Math.random(),fx={}}={}){
  return lane;
 }
 
-return {TUNING,W,H,MID,SPOTS,HEAD_Y,createLane};
+return {TUNING,W,H,MID,SPOTS,HEAD_Y,BALL_START_Y,createLane};
 });
