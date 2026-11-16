@@ -233,10 +233,13 @@ const XS=x=>MID+(x-MID)*TUNING.pinSpacing/26;
    Zwischen Zielpfeilen und Foul-Linie, ohne Claim, Feenstaub statisch. Wird einmal vorgezeichnet,
    danach kostet es pro Bild nur ein drawImage. */
 const LANE_LOGO={
- w:168,       // Breite der Raute (ohne Feenstaub)
- bottom:474,  // Unterkante der Raute (Foul-Linie bei 482)
- alpha:.18,   // Deckkraft: wie stark das Logo durch den Lack scheint
- dustAlpha:.50, // Deckkraft des Feenstaubs (weiss auf hellem Holz braucht mehr)
+ /* Lage auf der Bahn (Bahn-Einheiten, 360 × 560): Holz von x=64 bis 296, Mitte 180.
+    Zum Vergleich in y: Kopfpin 168, Zielpfeile 308–364, Foul-Linie 482, unterer Rand 560 */
+ x:180,       // Mitte der Raute, waagrecht (kleiner = nach links)
+ bottom:455,  // Unterkante der Raute (kleiner = weiter nach oben)
+ w:168,       // Breite der Raute (ohne Feenstaub), die Höhe passt sich an
+ alpha:.24,   // Deckkraft: wie stark das Logo durch den Lack scheint
+ dustAlpha:.00, // Deckkraft des Feenstaubs (weiss auf hellem Holz braucht mehr)
  brown:true   // true = in Brauntönen (wie eingelegt ins Holz), false = Originalfarben
 };
 /* Brauntöne von dunkel bis hell: Helligkeit des Logos wird auf diese Skala abgebildet */
@@ -284,7 +287,7 @@ let laneLogo=null; // {img, x, y, w, h} in Bahn-Koordinaten
    }
    g.putImageData(id,0,0);
   }
-  laneLogo={img:c,w,h,x:MID-LANE_LOGO.w/2-(L.x0-F.x0)*k,y:LANE_LOGO.bottom-(L.y1-F.y0)*k};
+  laneLogo={img:c,w,h,x:LANE_LOGO.x-LANE_LOGO.w/2-(L.x0-F.x0)*k,y:LANE_LOGO.bottom-(L.y1-F.y0)*k};
  }).catch(()=>{});
 })();
 function drawLaneLogo(){
