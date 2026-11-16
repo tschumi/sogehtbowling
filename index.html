@@ -31,9 +31,14 @@
 <div class="monitor">
 <button class="xbtn" type="button" aria-label="Spiel schliessen">×</button>
 <div class="sheet" id="sheet" role="status" aria-label="Spielstand"></div>
-<div class="lw"><canvas id="lane" tabindex="0" role="button" aria-label="Bowlingbahn: Kugel aus dem Rücklauf rechts holen, dann tippen oder klicken zum Werfen. Mit der Tastatur: Pfeiltasten zum Zielen, Umschalt und Pfeiltasten verschieben die Kugel, Enter halten und loslassen zum Werfen."></canvas><div id="pow" class="pow" aria-hidden="true"></div><div id="toast" class="toast" role="status"><b></b><span></span></div></div>
+<div class="lw"><canvas id="lane" role="img" aria-label="Bowlingbahn: Kugel aus dem Rücklauf rechts holen, dann tippen oder klicken zum Werfen. Gespielt wird mit Maus oder Touch."></canvas><div id="pow" class="pow" aria-hidden="true"></div><div id="toast" class="toast" role="status"><b></b><span></span></div>
+<div id="howto" class="howto" role="dialog" aria-label="Spielanleitung"><b>So wird gespielt</b><ol>
+<li><em>Kugel holen:</em> Klick auf die Kugel im Rücklauf rechts legt sie in die Mitte, Ziehen legt sie an die gewünschte Stelle. Auf der Bahn lässt sie sich weiter verschieben, Doppeltipp bringt sie zurück in die Mitte.</li>
+<li data-mode="klassisch"><em>Zielen und werfen:</em> Dorthin drücken, wo die Kugel hin soll. Halten lässt die Stärke pendeln, im richtigen Moment loslassen. Viel Wucht zittert mehr.</li>
+<li data-mode="schleuder" hidden><em>Zielen und werfen:</em> Irgendwo auf die Bahn drücken und nach hinten ziehen wie eine Steinschleuder. Weiter ziehen gibt mehr Wucht, bei viel Wucht zittert der Pfeil. Loslassen wirft.</li>
+</ol></div></div>
 <div class="pw"><span class="lbl">Stärke</span><div class="bar"><i id="pf"></i><b id="pv"></b></div><span class="dots" role="img" aria-label="Wurf in dieser Runde"><i class="on"></i><i></i><i class="b3"></i></span></div>
-<p class="hint"><span class="hl">Zuerst die Kugel aus dem Rücklauf rechts holen: Klick legt sie in die Mitte, Ziehen an die gewünschte Stelle. Zielen: Dorthin drücken, wo die Kugel hin soll. Halten lässt die Stärke pendeln, im richtigen Moment loslassen. Viel Wucht zittert mehr.</span><span class="hs">Kugel aus dem Rücklauf holen, dann tippen zum Zielen, halten für Wucht, im richtigen Moment loslassen.</span></p>
+<p class="hint"><span>Kugel aus dem Rücklauf holen, zielen, werfen.</span><button class="info" type="button" aria-expanded="false" aria-controls="howto" aria-label="Spielanleitung">i</button></p>
 </div>
 </div><a class="scroll" href="#team" aria-label="Weiter zum Team">Zum Team<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a></section>
 

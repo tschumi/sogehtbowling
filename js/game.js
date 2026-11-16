@@ -400,7 +400,7 @@ function drawParticles(){
 /* Ziellinie: gestrichelter Weg von der Startposition zum Ziel, solange gezielt wird */
 function drawAim(){
  if(sling){drawSling();return}
- if(!charge&&!(keyAim&&state===READY))return;
+ if(!charge)return;
  const x=aimTarget(),y=HEAD_Y+24;
  ctx.save();
  ctx.strokeStyle='rgba(255,122,26,.75)';ctx.lineWidth=2;ctx.setLineDash([6,8]);
@@ -493,10 +493,10 @@ function loop(ts){
 /* ========== Eingabe ==========
    Drücken = zielen, Halten = der Stärkebalken pendelt zwischen 0 und 100 %, Loslassen = werfen.
    Solange man hält, zittert der Zielpunkt leicht, bei viel Stärke mehr.
-   Tastatur: Pfeile zielen, Enter/Leertaste halten und loslassen. */
+   Gespielt wird mit Maus oder Touch, eine Tastatursteuerung gibt es bewusst nicht. */
 
 const powerFill=$('pf'),powerValue=$('pv');
-let charge=null,aimX=MID,keyAim=false;
+let charge=null,aimX=MID;
 
 const toLaneX=e=>{const r=canvas.getBoundingClientRect();return Math.max(28,Math.min(332,(e.clientX-r.left)/r.width*W))};
 const startCharge=()=>{charge={t:performance.now(),phase:Math.random()*100}};
@@ -516,7 +516,7 @@ const aimTarget=()=>Math.max(28,Math.min(332,aimX+wobble()));
 const release=()=>{
  if(!charge)return;
  const v=5+8*chargeLevel(),x=aimTarget();
- charge=null;keyAim=false;throwBall(x,v,startX());
+ charge=null;throwBall(x,v,startX());
 };
 /* Im Balken: beim Laden das Tempo. Ob geworfen werden kann, zeigt die Kugel (zurück aus dem Rücklauf). */
 let meterText='';
@@ -535,7 +535,7 @@ const restart=()=>{newGame();toast.classList.remove('on');hideOverlays()};
    Loslassen wirft. Zu kurz gezogen = abgebrochen.
    Kugel holen: Nach jedem Wurf liegt sie im Rücklauf. Ein Klick darauf legt sie in die Mitte der Bahn,
    anfassen und auf die Bahn ziehen legt sie an die gewünschte Stelle. Auf der Bahn lässt sie sich weiter seitlich verschieben.
-   Doppeltipp auf die Kugel stellt sie zurück in die Mitte. Tastatur: Umschalt + Pfeile. */
+   Doppeltipp auf die Kugel stellt sie zurück in die Mitte. */
 const SLING=new URLSearchParams(location.search).has('schleuder');
 const BALL_Y=P.BALL_START_Y,SPOT_MIN=84,SPOT_MAX=276,GRAB=30; // GRAB: Trefferzone um die Kugel (Bahn-Einheiten)
 let sling=null;   // {sx,sy,x,y,t,phase} in Bahn-Koordinaten
@@ -589,9 +589,37 @@ function drawSling(){
  ctx.beginPath();ctx.moveTo(spotX,BALL_Y);ctx.lineTo(spotX+(sling.x-sling.sx),BALL_Y+(sling.y-sling.sy));ctx.stroke();
  ctx.restore();
 }
-if(SLING){
- document.querySelector('.hint .hl').textContent='Auf die Bahn klicken und mit gedrückter Maustaste nach hinten ziehen wie eine Steinschleuder. Weiter ziehen gibt mehr Wucht. Loslassen wirft. Vorher die Kugel aus dem Rücklauf holen: Klick legt sie in die Mitte, Ziehen an die gewünschte Stelle.';
- document.querySelector('.hint .hs').textContent='Nach hinten ziehen wie eine Steinschleuder, loslassen wirft. Kugel vorher aus dem Rücklauf antippen oder auf die Bahn ziehen.';
+/* ---------- Spielanleitung (Info-Knopf) ----------
+   Klick oder Tipp öffnet und schliesst, mit der Maus öffnet auch Darüberfahren.
+   Escape oder ein Klick daneben schliesst. Beim allerersten Besuch geht sie einmal von selbst auf. */
+const infoBtn=document.querySelector('.hint .info'),howto=$('howto');
+let howtoPinned=false; // per Klick geöffnet (bleibt offen, bis man schliesst)
+function setHowto(open,pinned){
+ howto.classList.toggle('open',open);infoBtn.setAttribute('aria-expanded',String(open));howtoPinned=open&&pinned;
+}
+if(infoBtn&&howto&&howto.querySelectorAll){
+ howto.querySelectorAll('[data-mode]').forEach(li=>{li.hidden=(li.dataset.mode==='schleuder')!==SLING});
+ infoBtn.addEventListener('click',()=>setHowto(!howtoPinned,true));
+ infoBtn.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&!howtoPinned)setHowto(true,false)});
+ infoBtn.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&!howtoPinned)setHowto(false,false)});
+ document.addEventListener('pointerdown',e=>{
+  if(howto.classList.contains('open')&&!howto.contains(e.target)&&!infoBtn.contains(e.target))setHowto(false,false);
+ });
+ /* Escape schliesst nur die Anleitung (nicht gleich das ganze Spiel auf dem Handy) */
+ addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&howto.classList.contains('open')){e.stopPropagation();setHowto(false,false)}
+ },true);
+ try{
+  if(!localStorage.getItem('hg-anleitung')&&'IntersectionObserver' in window){
+   const io=new IntersectionObserver(es=>{
+    if(!es.some(x=>x.isIntersecting))return;
+    io.disconnect();
+    setTimeout(()=>setHowto(true,true),1200);
+    try{localStorage.setItem('hg-anleitung','1')}catch(_){}
+   },{threshold:.6});
+   io.observe(canvas);
+  }
+ }catch(_){}
 }
 
 canvas.addEventListener('pointerdown',e=>{
@@ -639,27 +667,6 @@ canvas.addEventListener('pointerup',e=>{
 });
 canvas.addEventListener('pointercancel',()=>{charge=null;sling=null;moving=null;grabbed=null});
 laneWrap.addEventListener('pointerdown',dismiss);
-
-canvas.addEventListener('keydown',e=>{
- if(state===SHOWING){
-  if(['Enter',' ','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();dismiss()}
-  return;
- }
- if(e.shiftKey&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
-  e.preventDefault();setSpot(spotX+(e.key==='ArrowLeft'?-12:12));
- }else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
-  e.preventDefault();
-  aimX=Math.max(28,Math.min(332,aimX+(e.key==='ArrowLeft'?-14:14)));keyAim=true;
-  showToast('Ziel',aimX<150?'links':aimX>210?'rechts':'Mitte');
- }else if((e.key==='Enter'||e.key===' ')&&!e.repeat&&state===READY){
-  e.preventDefault();
-  if(gameOver){restart();return}
-  toast.classList.remove('on');
-  if(ret.phase==='rack'){spotX=MID;ret.phase='held'} // Tastatur: Kugel direkt in die Mitte
-  startCharge();
- }
-});
-canvas.addEventListener('keyup',e=>{if(e.key==='Enter'||e.key===' ')release()});
 
 /* ========== Test-Modus (nur mit ?test in der Adresse) ==========
    Tasten für den nächsten Wurf: X = Strike, S = Spare, R = Rinne. Oben rechts die Bildrate. */
