@@ -2,9 +2,8 @@
 @font-face{font-family:"Space Grotesk";src:url("../assets/fonts/SpaceGrotesk-VariableFont_wght.ttf") format("truetype");font-weight:300 700;font-style:normal;font-display:swap}
 @font-face{font-family:Yellowtail;src:url("../assets/fonts/Yellowtail-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}
 /* Hoppi Galoppi Solutions – Styles */
-:root{--bg:#eef1f8;--bg2:#e0e5f2;--ink:#14182b;--mute:#4a5372;--line:#c3cadf;--acc:#ff7a1a;--acct:#b84a00;--night:#12162a;--cream:#f7f2e6;--dim:#a9b0cf;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171c36;--bg2:#1d2342;--ink:#f2f0ea;--mute:#a9b0cf;--line:#2e365c;--acct:#ff8f3a}}
-:root[data-theme="dark"]{--bg:#171c36;--bg2:#1d2342;--ink:#f2f0ea;--mute:#a9b0cf;--line:#2e365c;--acct:#ff8f3a}
+/* Immer dunkles Farbschema, unabhängig von der Einstellung des Geräts */
+:root{color-scheme:dark;--bg:#171c36;--bg2:#1d2342;--ink:#f2f0ea;--mute:#a9b0cf;--line:#2e365c;--acc:#ff7a1a;--acct:#ff8f3a;--night:#12162a;--cream:#f7f2e6;--dim:#a9b0cf;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 90px);scroll-behavior:smooth}
 *,*::before,*::after{box-sizing:inherit}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 1.05rem/1.55 "Space Grotesk",system-ui,sans-serif}
