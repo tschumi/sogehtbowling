@@ -229,6 +229,57 @@ const PZ=TUNING.pinScale,BR=TUNING.ballRadius;
 /* Die Pinsetter-Grafik wurde für Pin-Abstand 26 gezeichnet und wächst mit dem Abstand mit */
 const XS=x=>MID+(x-MID)*TUNING.pinSpacing/26;
 
+/* Logo auf der Bahn, wie bei echten Bahnen unter der Oberfläche (oder beim Eishockey unter dem Eis).
+   Zwischen Zielpfeilen und Foul-Linie, ohne Claim, Feenstaub statisch. Wird einmal vorgezeichnet,
+   danach kostet es pro Bild nur ein drawImage. */
+const LANE_LOGO={
+ w:168,       // Breite der Raute (ohne Feenstaub)
+ bottom:474,  // Unterkante der Raute (Foul-Linie bei 482)
+ alpha:.22,   // Deckkraft: wie stark das Logo durch den Lack scheint
+ dustAlpha:.50 // Deckkraft des Feenstaubs (weiss auf hellem Holz braucht mehr)
+};
+let laneLogo=null; // {img, x, y, w, h} in Bahn-Koordinaten
+(function loadLaneLogo(){
+ const BIG=1600;
+ /* SVG mit zusätzlichem CSS in eine grosse Canvas zeichnen */
+ const render=(svg,css)=>new Promise((ok,fail)=>{
+  const img=new Image();
+  img.onload=()=>{
+   const c=document.createElement('canvas');c.width=BIG;c.height=Math.round(BIG*img.height/img.width);
+   c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);ok(c);
+  };
+  img.onerror=fail;
+  img.src=URL.createObjectURL(new Blob([svg.replace('<style>','<style>'+css)],{type:'image/svg+xml'}));
+ });
+ /* Rechteck um alle sichtbaren Pixel */
+ const bounds=c=>{
+  const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+  let x0=c.width,y0=c.height,x1=0,y1=0;
+  for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++)if(d[(y*c.width+x)*4+3]>8){
+   if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+  }
+  return {x0,y0,x1,y1};
+ };
+ const HIDE='#Claim{display:none}';
+ const DUST='#Fairy-dust path{animation:none!important;opacity:1!important}';
+ fetch('assets/logo.svg').then(r=>r.text()).then(svg=>Promise.all([
+  render(svg,HIDE+'#Fairy-dust{display:none}'), // nur Raute, für Grösse und Lage
+  render(svg,HIDE+DUST),                         // mit Feenstaub, für den Ausschnitt
+  render(svg,HIDE+DUST+'#Pins,#Frame,#Shadow,#Ball,#Text1{display:none}') // nur Feenstaub
+ ])).then(([plain,full,dust])=>{
+  const L=bounds(plain),F=bounds(full),k=LANE_LOGO.w/(L.x1-L.x0); // Bahn-Einheiten pro Pixel
+  const w=(F.x1-F.x0)*k,h=(F.y1-F.y0)*k;
+  const c=document.createElement('canvas');c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);
+  const g=c.getContext('2d');
+  g.globalAlpha=LANE_LOGO.alpha;g.drawImage(plain,F.x0,F.y0,F.x1-F.x0,F.y1-F.y0,0,0,c.width,c.height);
+  g.globalAlpha=LANE_LOGO.dustAlpha;g.drawImage(dust,F.x0,F.y0,F.x1-F.x0,F.y1-F.y0,0,0,c.width,c.height);
+  laneLogo={img:c,w,h,x:MID-LANE_LOGO.w/2-(L.x0-F.x0)*k,y:LANE_LOGO.bottom-(L.y1-F.y0)*k};
+ }).catch(()=>{});
+})();
+function drawLaneLogo(){
+ if(laneLogo)ctx.drawImage(laneLogo.img,laneLogo.x,laneLogo.y,laneLogo.w,laneLogo.h);
+}
+
 function drawLane(){
  ctx.clearRect(0,0,W,H);
  ctx.fillStyle='#0b0e1c';ctx.fillRect(0,0,W,H);
@@ -240,6 +291,7 @@ function drawLane(){
  ctx.fillStyle=g;ctx.fillRect(64,0,232,H);
  ctx.strokeStyle='rgba(60,30,0,.18)';ctx.lineWidth=1;
  for(let i=1;i<8;i++){ctx.beginPath();ctx.moveTo(64+i*29,0);ctx.lineTo(64+i*29,H);ctx.stroke()}
+ drawLaneLogo();
  /* Zielpfeile */
  ctx.fillStyle='rgba(90,45,10,.5)';
  for(let i=0;i<7;i++){
