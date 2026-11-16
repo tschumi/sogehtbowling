@@ -92,12 +92,12 @@ function planReset(keep){
  if(keep){
   queue({table:TABLE_DOWN},{wait:10},{run:()=>standing.forEach(p=>p.att=1)},{table:TABLE_UP},
    {rake:1,then:()=>{lane.pins=lane.pins.filter(p=>!p.d)}},{wait:6},
-   {table:TABLE_DOWN},{wait:10},{run:()=>lane.pins.forEach(p=>{p.att=0;p.oy=0})},{table:TABLE_UP});
+   {run:returnBall},{table:TABLE_DOWN},{wait:10},{run:()=>lane.pins.forEach(p=>{p.att=0;p.oy=0})},{table:TABLE_UP});
  }else{
   standing.forEach(p=>{p.d=true;p.r=R(-.5,.5)});
   queue({rake:1,then:()=>{lane.pins=[]}},{wait:6},
    {run:()=>{lane.rack();lane.pins.forEach(p=>{p.att=1;p.oy=TABLE_UP-TABLE_DOWN})}},{wait:14},
-   {table:TABLE_DOWN},{wait:16},{run:()=>lane.pins.forEach(p=>{p.att=0;p.oy=0})},{table:TABLE_UP});
+   {run:returnBall},{table:TABLE_DOWN},{wait:16},{run:()=>lane.pins.forEach(p=>{p.att=0;p.oy=0})},{table:TABLE_UP});
  }
 }
 
@@ -146,6 +146,7 @@ function throwBall(tx,pwr,sx=MID){
  applyCheat();
  if(cheat==='r'){cheat=0;tx=40;sx=MID}
  lane.launch(tx,v,sx);
+ ret.phase='out';ret.due=false;
 }
 
 /* Wurf auswerten, sobald alles ruhig ist: Punkte eintragen, Spruch zeigen, Pinsetter einplanen */
@@ -190,11 +191,12 @@ function step(){
  runPinsetter();
  if(reset===RESET_RUNNING&&!jobs.length)reset=RESET_NONE;
  /* bereit für den nächsten Wurf, wenn Pinsetter fertig und Meldung zu */
- if(state===SHOWING&&!reset&&!msgOpen){
+ if(state===SHOWING&&!reset&&!msgOpen&&ret.phase==='rack'){
   state=READY;
   if(gameOver)comicTitle('end',String(finalScore),('Punkte! '+rating(wertung,finalScore)).trim());
  }
  tick++;
+ moveReturn();
  lane.step(!!rake);
  moveParticles();
  if(state===ROLLING&&!lane.ball){
@@ -372,7 +374,9 @@ function drawRake(){
 }
 
 function drawBall(){
- const b=lane.ball||handBall();if(!b)return;
+ const b=lane.ball||handBall();if(b)drawBallAt(b);
+}
+function drawBallAt(b){
  const q=ctx.createRadialGradient(b.x-BR/3,b.y-BR/3,BR/6,b.x,b.y,BR);
  q.addColorStop(0,b.g?'#9a6a3a':'#ff9448');q.addColorStop(.65,b.g?'#7a4a1a':'#ff7a1a');q.addColorStop(1,b.g?'#6a3d14':'#e8690f');
  ctx.fillStyle=q;ctx.beginPath();ctx.arc(b.x,b.y,BR,0,7);ctx.fill();
@@ -407,12 +411,65 @@ function drawAim(){
 
 function draw(){
  drawLane();
+ drawReturn();
  drawAim();
  lane.pins.forEach(drawPin);
  drawTable();
  drawRake();
  drawBall();
  drawParticles();
+}
+
+/* ========== Kugelrücklauf ==========
+   Rechts neben der Bahn: Nach dem Wurf läuft die Kugel unterirdisch zurück. Sobald der Pinsetter die Pins
+   absetzt, taucht sie unter der Haube auf und rollt sanft in die Mulde. Erst dann kann wieder geworfen werden.
+   Dort holt der Spieler sie selbst ab und legt sie auf die Bahn (siehe Eingabe).
+   Phasen: rack (in der Mulde) → out (rollt auf der Bahn) → under (unterirdisch) → roll (aus der Haube) → rack
+           mit Steinschleuder zusätzlich: rack → pick (wird hingelegt) → held (liegt auf der Bahn) → out */
+
+const RET_X=340,RET_HOOD_Y=432,RET_RACK_Y=528;      // Mitte der Schiene, Haube, Mulde
+const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const UNDER_STEPS=REDUCED?40:50,ROLL_STEPS=REDUCED?1:55,PICK_STEPS=REDUCED?1:18;
+const ret={phase:'rack',t:0,y:RET_RACK_Y,a:0,due:false}; // due: Pinsetter setzt ab, Kugel darf kommen
+/* vom Pinsetter aufgerufen, wenn er die Pins absetzt */
+function returnBall(){ret.due=true}
+
+function moveReturn(){
+ if(ret.phase==='out'&&!lane.ball){ret.phase='under';ret.t=0}
+ else if(ret.phase==='under'&&++ret.t>=UNDER_STEPS&&ret.due){ret.phase='roll';ret.t=0;ret.y=RET_HOOD_Y}
+ else if(ret.phase==='roll'){
+  const k=Math.min(1,++ret.t/ROLL_STEPS),y=RET_HOOD_Y+(RET_RACK_Y-RET_HOOD_Y)*(1-Math.pow(1-k,3));
+  ret.a-=(y-ret.y)*.08;ret.y=y; // rollt nach unten, dreht sich mit
+  if(k>=1)ret.phase='rack';
+ }
+ else if(ret.phase==='pick'&&++ret.t>=PICK_STEPS)ret.phase='held';
+}
+/* Kugel aus der Mulde (oder von dort, wo sie gezogen wurde) an ihren Platz auf der Bahn legen */
+function placeBall(x,from){
+ spotX=Math.max(SPOT_MIN,Math.min(SPOT_MAX,x));
+ ret.phase='pick';ret.t=0;ret.fx=from?from.x:RET_X;ret.fy=from?from.y:RET_RACK_Y;
+}
+const inRack=p=>ret.phase==='rack'&&Math.hypot(p.x-RET_X,p.y-RET_RACK_Y)<GRAB;
+
+
+function drawReturn(){
+ ctx.save();
+ /* Schiene mit zwei Laufleisten */
+ ctx.fillStyle='#141a33';ctx.fillRect(RET_X-17,RET_HOOD_Y-4,34,H-RET_HOOD_Y+4);
+ ctx.fillStyle='rgba(255,255,255,.08)';ctx.fillRect(RET_X-12,RET_HOOD_Y,2,H-RET_HOOD_Y);ctx.fillRect(RET_X+10,RET_HOOD_Y,2,H-RET_HOOD_Y);
+ /* Mulde */
+ ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(RET_X,RET_RACK_Y+4,15,9,0,0,7);ctx.fill();
+ /* Kugel im Rücklauf */
+ if(ret.phase==='roll'||(ret.phase==='rack'&&!grabbed))drawBallAt({x:RET_X,y:ret.y,a:ret.a,g:false});
+ /* Haube: die Kugel taucht darunter auf */
+ const top=RET_HOOD_Y-30,hg=ctx.createLinearGradient(0,top,0,RET_HOOD_Y+14);
+ hg.addColorStop(0,'#2b3360');hg.addColorStop(1,'#1b2142');
+ ctx.fillStyle=hg;
+ ctx.beginPath();ctx.moveTo(RET_X-19,RET_HOOD_Y+14);ctx.lineTo(RET_X-19,top+12);
+ ctx.quadraticCurveTo(RET_X-19,top,RET_X,top);ctx.quadraticCurveTo(RET_X+19,top,RET_X+19,top+12);
+ ctx.lineTo(RET_X+19,RET_HOOD_Y+14);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#ff7a1a';ctx.fillRect(RET_X-19,RET_HOOD_Y+12,38,2);
+ ctx.restore();
 }
 
 /* ========== Hauptschleife ==========
@@ -461,14 +518,13 @@ const release=()=>{
  const v=5+8*chargeLevel(),x=aimTarget();
  charge=null;keyAim=false;throwBall(x,v,startX());
 };
-/* Im Balken: beim Laden das Tempo, sonst „Bereit“, sobald geworfen werden kann */
-const powerBar=powerFill.parentElement;
+/* Im Balken: beim Laden das Tempo. Ob geworfen werden kann, zeigt die Kugel (zurück aus dem Rücklauf). */
 let meterText='';
 const updateMeter=()=>{
- const p=sling?slingLevel():chargeLevel(),busy=charge||sling,ready=!busy&&state===READY&&!gameOver;
- const text=busy?Math.round((5+8*p)*2.8)+' km/h':ready?'Bereit':'';
+ const p=sling?slingLevel():chargeLevel();
+ const text=charge||sling?Math.round((5+8*p)*2.8)+' km/h':'';
  powerFill.style.width=p*100+'%';
- if(text!==meterText){powerValue.textContent=meterText=text;powerBar.classList.toggle('ready',ready)}
+ if(text!==meterText)powerValue.textContent=meterText=text;
 };
 /* nach Spielende: erster Klick/Tipp schliesst die Meldung und startet ein neues Spiel, wirft aber nicht */
 const restart=()=>{newGame();toast.classList.remove('on');hideOverlays()};
@@ -477,22 +533,30 @@ const restart=()=>{newGame();toast.classList.remove('on');hideOverlays()};
    Irgendwo auf der Bahn drücken und nach hinten ziehen: Die Kugel zielt in die Gegenrichtung,
    die Länge des Zugs bestimmt die Wucht. Eine kurze Linie zeigt Richtung und Wucht, bei viel Wucht zittert sie.
    Loslassen wirft. Zu kurz gezogen = abgebrochen.
-   Startposition: Die Kugel selbst anfassen und seitlich ziehen, sie bleibt dort auch für die nächsten Würfe.
+   Kugel holen: Nach jedem Wurf liegt sie im Rücklauf. Ein Klick darauf legt sie in die Mitte der Bahn,
+   anfassen und auf die Bahn ziehen legt sie an die gewünschte Stelle. Auf der Bahn lässt sie sich weiter seitlich verschieben.
    Doppeltipp auf die Kugel stellt sie zurück in die Mitte. Tastatur: Umschalt + Pfeile. */
 const SLING=new URLSearchParams(location.search).has('schleuder');
 const BALL_Y=P.BALL_START_Y,SPOT_MIN=84,SPOT_MAX=276,GRAB=30; // GRAB: Trefferzone um die Kugel (Bahn-Einheiten)
 let sling=null;   // {sx,sy,x,y,t,phase} in Bahn-Koordinaten
 let spotX=MID;    // Startposition der Kugel
-let moving=null;  // {dx} solange die Kugel verschoben wird
+let moving=null;  // {dx} solange die Kugel auf der Bahn verschoben wird
+let grabbed=null; // {x,y,moved} solange die Kugel aus dem Rücklauf geholt wird
 let lastBallTap=0;
-const startX=()=>SLING?spotX:MID;
+const startX=()=>spotX;
 const setSpot=x=>{spotX=Math.max(SPOT_MIN,Math.min(SPOT_MAX,x))};
-const onBall=p=>Math.hypot(p.x-spotX,p.y-BALL_Y)<GRAB;
+const onBall=p=>ret.phase==='held'&&Math.hypot(p.x-spotX,p.y-BALL_Y)<GRAB;
 const toLane=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H}};
 /* Kugel liegt bereit, solange geworfen werden kann */
 function handBall(){
- if(!SLING||state!==READY||gameOver)return null;
- return {x:spotX,y:BALL_Y,a:0,g:false};
+ if(grabbed)return {x:grabbed.x,y:grabbed.y,a:0,g:false};
+ if(ret.phase==='held')return {x:spotX,y:BALL_Y,a:0,g:false};
+ if(ret.phase==='pick'){
+  /* an den Platz gleiten, aus der Mulde mit kleinem Bogen */
+  const k=ret.t/PICK_STEPS,e=k*k*(3-2*k),arc=ret.fx===RET_X&&ret.fy===RET_RACK_Y?14:0;
+  return {x:ret.fx+(spotX-ret.fx)*e,y:ret.fy+(BALL_Y-ret.fy)*e-arc*Math.sin(Math.PI*k),a:0,g:false};
+ }
+ return null;
 }
 /* Zug: Länge (0–1 = Wucht) und Ziel-x; null, solange nicht nach hinten gezogen */
 function slingShot(){
@@ -526,8 +590,8 @@ function drawSling(){
  ctx.restore();
 }
 if(SLING){
- document.querySelector('.hint .hl').textContent='Auf die Bahn klicken und mit gedrückter Maustaste nach hinten ziehen wie eine Steinschleuder. Weiter ziehen gibt mehr Wucht. Loslassen wirft. Die Kugel selbst lässt sich seitlich verschieben.';
- document.querySelector('.hint .hs').textContent='Nach hinten ziehen wie eine Steinschleuder, loslassen wirft. Kugel seitlich ziehen zum Platzieren.';
+ document.querySelector('.hint .hl').textContent='Auf die Bahn klicken und mit gedrückter Maustaste nach hinten ziehen wie eine Steinschleuder. Weiter ziehen gibt mehr Wucht. Loslassen wirft. Vorher die Kugel aus dem Rücklauf holen: Klick legt sie in die Mitte, Ziehen an die gewünschte Stelle.';
+ document.querySelector('.hint .hs').textContent='Nach hinten ziehen wie eine Steinschleuder, loslassen wirft. Kugel vorher aus dem Rücklauf antippen oder auf die Bahn ziehen.';
 }
 
 canvas.addEventListener('pointerdown',e=>{
@@ -536,28 +600,44 @@ canvas.addEventListener('pointerdown',e=>{
  if(gameOver){restart();return}
  try{canvas.setPointerCapture(e.pointerId)}catch(_){}
  toast.classList.remove('on');hideOverlays();
- if(SLING){
+ {
+  /* Kugel holen und platzieren (beide Steuerungen) */
   const p=toLane(e);
+  if(inRack(p)){grabbed={x:p.x,y:p.y,sx:p.x,sy:p.y,moved:false};return}
+  if(ret.phase!=='held'&&ret.phase!=='pick'){
+   showToast('Kugel','Zuerst die Kugel aus dem Rücklauf rechts holen.');
+   setTimeout(()=>{if(state===READY)toast.classList.remove('on')},1800);
+   return;
+  }
   if(onBall(p)){
    /* Doppeltipp: zurück in die Mitte */
    if(performance.now()-lastBallTap<350){setSpot(MID);lastBallTap=0;return}
    lastBallTap=performance.now();
    moving={dx:p.x-spotX};return;
   }
-  sling={sx:p.x,sy:p.y,x:p.x,y:p.y,t:performance.now(),phase:Math.random()*100};return;
+  if(SLING){sling={sx:p.x,sy:p.y,x:p.x,y:p.y,t:performance.now(),phase:Math.random()*100};return}
  }
  aimX=toLaneX(e);startCharge();
 });
 canvas.addEventListener('pointermove',e=>{
  if(sling)Object.assign(sling,toLane(e));
+ else if(grabbed){
+  const p=toLane(e);grabbed.x=p.x;grabbed.y=p.y;
+  if(Math.hypot(p.x-grabbed.sx,p.y-grabbed.sy)>6)grabbed.moved=true;
+ }
  else if(moving)setSpot(toLane(e).x-moving.dx);
- else if(SLING&&e.pointerType==='mouse')canvas.style.cursor=state===READY&&onBall(toLane(e))?'grab':'';
+ else if(e.pointerType==='mouse'){const p=toLane(e);canvas.style.cursor=state===READY&&(onBall(p)||inRack(p))?'grab':''}
 });
 canvas.addEventListener('pointerup',e=>{
+ if(grabbed){
+  /* Klick = Mitte, gezogen = dort, wo losgelassen (seitlich auf die Bahn begrenzt) */
+  const g=grabbed;grabbed=null;
+  placeBall(g.moved?g.x:MID,g.moved?g:null);return;
+ }
  if(moving){moving=null;return}
  if(sling){Object.assign(sling,toLane(e));slingRelease()}else release();
 });
-canvas.addEventListener('pointercancel',()=>{charge=null;sling=null;moving=null});
+canvas.addEventListener('pointercancel',()=>{charge=null;sling=null;moving=null;grabbed=null});
 laneWrap.addEventListener('pointerdown',dismiss);
 
 canvas.addEventListener('keydown',e=>{
@@ -565,7 +645,7 @@ canvas.addEventListener('keydown',e=>{
   if(['Enter',' ','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();dismiss()}
   return;
  }
- if(SLING&&e.shiftKey&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
+ if(e.shiftKey&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
   e.preventDefault();setSpot(spotX+(e.key==='ArrowLeft'?-12:12));
  }else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
   e.preventDefault();
@@ -574,7 +654,9 @@ canvas.addEventListener('keydown',e=>{
  }else if((e.key==='Enter'||e.key===' ')&&!e.repeat&&state===READY){
   e.preventDefault();
   if(gameOver){restart();return}
-  toast.classList.remove('on');startCharge();
+  toast.classList.remove('on');
+  if(ret.phase==='rack'){spotX=MID;ret.phase='held'} // Tastatur: Kugel direkt in die Mitte
+  startCharge();
  }
 });
 canvas.addEventListener('keyup',e=>{if(e.key==='Enter'||e.key===' ')release()});
