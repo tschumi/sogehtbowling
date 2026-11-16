@@ -235,9 +235,12 @@ const XS=x=>MID+(x-MID)*TUNING.pinSpacing/26;
 const LANE_LOGO={
  w:168,       // Breite der Raute (ohne Feenstaub)
  bottom:474,  // Unterkante der Raute (Foul-Linie bei 482)
- alpha:.22,   // Deckkraft: wie stark das Logo durch den Lack scheint
- dustAlpha:.50 // Deckkraft des Feenstaubs (weiss auf hellem Holz braucht mehr)
+ alpha:.18,   // Deckkraft: wie stark das Logo durch den Lack scheint
+ dustAlpha:.50, // Deckkraft des Feenstaubs (weiss auf hellem Holz braucht mehr)
+ brown:true   // true = in Brauntönen (wie eingelegt ins Holz), false = Originalfarben
 };
+/* Brauntöne von dunkel bis hell: Helligkeit des Logos wird auf diese Skala abgebildet */
+const LOGO_DARK=[62,30,8],LOGO_LIGHT=[255,236,200];
 let laneLogo=null; // {img, x, y, w, h} in Bahn-Koordinaten
 (function loadLaneLogo(){
  const BIG=1600;
@@ -273,6 +276,14 @@ let laneLogo=null; // {img, x, y, w, h} in Bahn-Koordinaten
   const g=c.getContext('2d');
   g.globalAlpha=LANE_LOGO.alpha;g.drawImage(plain,F.x0,F.y0,F.x1-F.x0,F.y1-F.y0,0,0,c.width,c.height);
   g.globalAlpha=LANE_LOGO.dustAlpha;g.drawImage(dust,F.x0,F.y0,F.x1-F.x0,F.y1-F.y0,0,0,c.width,c.height);
+  if(LANE_LOGO.brown){
+   const id=g.getImageData(0,0,c.width,c.height),d=id.data;
+   for(let i=0;i<d.length;i+=4){
+    const l=(d[i]*.3+d[i+1]*.59+d[i+2]*.11)/255;
+    for(let j=0;j<3;j++)d[i+j]=LOGO_DARK[j]+(LOGO_LIGHT[j]-LOGO_DARK[j])*l;
+   }
+   g.putImageData(id,0,0);
+  }
   laneLogo={img:c,w,h,x:MID-LANE_LOGO.w/2-(L.x0-F.x0)*k,y:LANE_LOGO.bottom-(L.y1-F.y0)*k};
  }).catch(()=>{});
 })();
