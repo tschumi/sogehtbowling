@@ -237,12 +237,14 @@ const XS=x=>MID+(x-MID)*TUNING.pinSpacing/26;
 const LANE_LOGO={
  /* Lage auf der Bahn (Bahn-Einheiten, 360 × 560): Holz von x=64 bis 296, Mitte 180.
     Zum Vergleich in y: Kopfpin 168, Zielpfeile 308–364, Foul-Linie 482, unterer Rand 560 */
- x:180,       // Mitte der Raute, waagrecht (kleiner = nach links)
- bottom:455,  // Unterkante der Raute (kleiner = weiter nach oben)
- w:168,       // Breite der Raute (ohne Feenstaub), die Höhe passt sich an
+ x:180,       // Mitte des Logos, waagrecht (kleiner = nach links)
+ bottom:435,  // Unterkante des Logos ohne Feenstaub (kleiner = weiter nach oben)
+ w:156,       // Breite des Logos (ohne Feenstaub), die Höhe passt sich an
  alpha:.24,   // Deckkraft: wie stark das Logo durch den Lack scheint
  dustAlpha:.00, // Deckkraft des Feenstaubs (weiss auf hellem Holz braucht mehr)
- brown:true   // true = in Brauntönen (wie eingelegt ins Holz), false = Originalfarben
+ brown:true,  // true = in Brauntönen (wie eingelegt ins Holz), false = Originalfarben
+ diamond:false, // true = mit Raute, false = ohne
+ pins:false    // true = mit Kugel und Pins, false = nur Schriftzug
 };
 /* Brauntöne von dunkel bis hell: Helligkeit des Logos wird auf diese Skala abgebildet */
 const LOGO_DARK=[62,30,8],LOGO_LIGHT=[255,236,200];
@@ -268,10 +270,10 @@ let laneLogo=null; // {img, x, y, w, h} in Bahn-Koordinaten
   }
   return {x0,y0,x1,y1};
  };
- const HIDE='#Claim{display:none}';
+ const HIDE='#Claim{display:none}'+(LANE_LOGO.diamond?'':'#Frame{display:none}')+(LANE_LOGO.pins?'':'#Pins,#Shadow,#Ball{display:none}');
  const DUST='#Fairy-dust path{animation:none!important;opacity:1!important}';
  fetch('assets/logo.svg').then(r=>r.text()).then(svg=>Promise.all([
-  render(svg,HIDE+'#Fairy-dust{display:none}'), // nur Raute, für Grösse und Lage
+  render(svg,HIDE+'#Fairy-dust{display:none}'), // ohne Feenstaub, für Grösse und Lage
   render(svg,HIDE+DUST),                         // mit Feenstaub, für den Ausschnitt
   render(svg,HIDE+DUST+'#Pins,#Frame,#Shadow,#Ball,#Text1{display:none}') // nur Feenstaub
  ])).then(([plain,full,dust])=>{
