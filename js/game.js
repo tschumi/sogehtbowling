@@ -622,7 +622,7 @@ if(infoBtn&&howto&&howto.querySelectorAll){
    const io=new IntersectionObserver(es=>{
     if(!es.some(x=>x.isIntersecting))return;
     io.disconnect();
-    setTimeout(()=>setHowto(true,true),1200);
+    setTimeout(()=>setHowto(true,true),6000);
     try{localStorage.setItem('hg-anleitung','1')}catch(_){}
    },{threshold:.6});
    io.observe(canvas);
