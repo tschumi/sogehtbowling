@@ -42,7 +42,7 @@ node --test                   # alle Tests (Node ab 18, keine Pakete)
 ```
 
 - `http://localhost:8000/?test` schaltet den Test-Modus ein: Tasten **X** (Strike), **S** (Spare), **R** (Rinne), fps-Anzeige.
-- `?schleuder` schaltet den **Prototyp Steinschleuder** ein (nach hinten ziehen und loslassen statt zielen und halten). Lässt sich mit `?test` kombinieren: `?schleuder&test`.
+- **Steuerung** wählen mit `STEUERUNG` oben in `game.js`: `'klassisch'` (zielen und halten) oder `'schleuder'` (Prototyp Steinschleuder: nach hinten ziehen und loslassen). Zum Ausprobieren ohne Codeänderung überschreiben `?schleuder` bzw. `?klassisch` die Einstellung, kombinierbar mit `?test` (z.B. `?schleuder&test`).
 - Die Spielanleitung öffnet sich beim ersten Besuch einmal von selbst. Zum erneuten Testen den Eintrag `hg-anleitung` im `localStorage` löschen oder ein privates Fenster nutzen.
 - `tests/layout.test.js` braucht Chrome (Pfad über `CHROME_PATH`), sonst wird er übersprungen.
 - Nach jeder Änderung `node --test` laufen lassen und das Ergebnis ehrlich melden.

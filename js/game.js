@@ -9,6 +9,11 @@
 
 /* ========== Grundlagen ========== */
 
+/* Steuerung: 'klassisch' = zielen, halten, im richtigen Moment loslassen (Stärkebalken)
+             'schleuder' = nach hinten ziehen und loslassen wie eine Steinschleuder (Prototyp)
+   Zum Ausprobieren ohne Änderung hier: ?schleuder bzw. ?klassisch in der Adresse */
+const STEUERUNG='schleuder';
+
 const P=window.HGPhysics,TUNING=P.TUNING,{W,H,MID,SPOTS,HEAD_Y}=P;
 const {marks,scores,total,nextStep,spruchKey,createSay,rating}=window.HGRules;
 
@@ -531,14 +536,15 @@ const updateMeter=()=>{
 /* nach Spielende: erster Klick/Tipp schliesst die Meldung und startet ein neues Spiel, wirft aber nicht */
 const restart=()=>{newGame();toast.classList.remove('on');hideOverlays()};
 
-/* ---------- PROTOTYP Steinschleuder (nur mit ?schleuder) ----------
+/* ---------- PROTOTYP Steinschleuder (STEUERUNG='schleuder' oder ?schleuder) ----------
    Irgendwo auf der Bahn drücken und nach hinten ziehen: Die Kugel zielt in die Gegenrichtung,
    die Länge des Zugs bestimmt die Wucht. Eine kurze Linie zeigt Richtung und Wucht, bei viel Wucht zittert sie.
    Loslassen wirft. Zu kurz gezogen = abgebrochen.
    Kugel holen: Nach jedem Wurf liegt sie im Rücklauf. Ein Klick darauf legt sie in die Mitte der Bahn,
    anfassen und auf die Bahn ziehen legt sie an die gewünschte Stelle. Auf der Bahn lässt sie sich weiter seitlich verschieben.
    Doppeltipp auf die Kugel stellt sie zurück in die Mitte. */
-const SLING=new URLSearchParams(location.search).has('schleuder');
+const URLP=new URLSearchParams(location.search);
+const SLING=URLP.has('schleuder')||(!URLP.has('klassisch')&&STEUERUNG==='schleuder');
 const BALL_Y=P.BALL_START_Y,SPOT_MIN=84,SPOT_MAX=276,GRAB=30; // GRAB: Trefferzone um die Kugel (Bahn-Einheiten)
 let sling=null;   // {sx,sy,x,y,t,phase} in Bahn-Koordinaten
 let spotX=MID;    // Startposition der Kugel
