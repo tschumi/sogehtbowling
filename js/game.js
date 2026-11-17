@@ -13,7 +13,7 @@
              'schleuder' = nach hinten ziehen und loslassen wie eine Steinschleuder (Prototyp)
              'schieben'  = nach vorne ziehen, wohin die Kugel soll, und loslassen (Prototyp)
    Zum Ausprobieren ohne Änderung hier: ?klassisch, ?schleuder bzw. ?schieben in der Adresse */
-const STEUERUNG='schleuder';
+const STEUERUNG='schieben';
 
 const P=window.HGPhysics,TUNING=P.TUNING,{W,H,MID,SPOTS,HEAD_Y}=P;
 const {marks,scores,total,nextStep,spruchKey,createSay,rating}=window.HGRules;
