@@ -384,16 +384,29 @@ function drawRake(){
 function drawBall(){
  const b=lane.ball||handBall();if(b)drawBallAt(b);
 }
+/* b: {x, y, a (Drehung vorwärts), g (in der Rinne)}, optional s (Drehung seitwärts),
+   h (Höhe über der Bahn 0–1: grösser, mit Schatten) und ring ({k: Verlauf 0–1, w: Stärke}) */
 function drawBallAt(b){
- const q=ctx.createRadialGradient(b.x-BR/3,b.y-BR/3,BR/6,b.x,b.y,BR);
+ const h=b.h||0,r=BR*(1+DROP_SCALE*h);
+ if(b.ring){
+  const {k,w}=b.ring,rr=BR*(1+1.3*w*k);
+  ctx.strokeStyle=`rgba(70,35,10,${.5*w*(1-k)})`;ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(b.x,b.y,rr,rr*.9,0,0,7);ctx.stroke();
+ }
+ if(h>0){
+  ctx.fillStyle=`rgba(0,0,0,${.35-.15*h})`;
+  ctx.beginPath();ctx.ellipse(b.x+DROP_SHADOW*h,b.y+DROP_SHADOW*h,BR*(1-.15*h),BR*(1-.15*h)*.9,0,0,7);ctx.fill();
+ }
+ const q=ctx.createRadialGradient(b.x-r/3,b.y-r/3,r/6,b.x,b.y,r);
  q.addColorStop(0,b.g?'#9a6a3a':'#ff9448');q.addColorStop(.65,b.g?'#7a4a1a':'#ff7a1a');q.addColorStop(1,b.g?'#6a3d14':'#e8690f');
- ctx.fillStyle=q;ctx.beginPath();ctx.arc(b.x,b.y,BR,0,7);ctx.fill();
- /* drei Fingerlöcher, die sich mit der Kugel drehen */
+ ctx.fillStyle=q;ctx.beginPath();ctx.arc(b.x,b.y,r,0,7);ctx.fill();
+ /* drei Fingerlöcher, die sich mit der Kugel drehen (vorwärts um a, seitwärts um s) */
  ctx.fillStyle='#0008';
- const ca=Math.cos(b.a||0),sa=Math.sin(b.a||0);
+ const ca=Math.cos(b.a||0),sa=Math.sin(b.a||0),cs=Math.cos(b.s||0),ss=Math.sin(b.s||0);
  [[-.28,-.42,.86],[.34,-.28,.9],[0,.12,.99]].forEach(([hx,hy,hz])=>{
-  const y2=hy*ca-hz*sa,z=hy*sa+hz*ca;
-  if(z>.15){ctx.beginPath();ctx.ellipse(b.x+hx*BR,b.y+y2*BR,1.6*BR/9,1.6*BR/9*z,0,0,7);ctx.fill()}
+  const y2=hy*ca-hz*sa,z1=hy*sa+hz*ca,x2=hx*cs+z1*ss,z=z1*cs-hx*ss;
+  /* Loch auf der Kugel: zum Rand hin gestaucht */
+  if(z>.15){ctx.beginPath();ctx.ellipse(b.x+x2*r,b.y+y2*r,1.6*r/9*z,1.6*r/9,Math.atan2(y2,x2),0,7);ctx.fill()}
  });
 }
 
@@ -433,11 +446,19 @@ function draw(){
    absetzt, taucht sie unter der Haube auf und rollt sanft in die Mulde. Erst dann kann wieder geworfen werden.
    Dort holt der Spieler sie selbst ab und legt sie auf die Bahn (siehe Eingabe).
    Phasen: rack (in der Mulde) → out (rollt auf der Bahn) → under (unterirdisch) → roll (aus der Haube) → rack
-           mit Steinschleuder zusätzlich: rack → pick (wird hingelegt) → held (liegt auf der Bahn) → out */
+           beim Hinlegen zusätzlich: rack → pick (gezogen) bzw. drop (angeklickt: fällt und rollt) → held (liegt auf der Bahn) → out */
 
 const RET_X=340,RET_HOOD_Y=432,RET_RACK_Y=528;      // Mitte der Schiene, Haube, Mulde
 const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const UNDER_STEPS=REDUCED?40:50,ROLL_STEPS=REDUCED?1:55,PICK_STEPS=REDUCED?1:18;
+/* Kugel per Klick aus dem Rücklauf holen: anheben, rechts über die Bahn tragen und mit etwas Schwung
+   fallen lassen. Seitwärts wird sie ab dem Loslassen gleichmässig langsamer, bis sie an ihrem Platz steht;
+   dabei schlägt sie auf, hüpft zweimal nach (der erste Hüpfer trägt weiter) und rollt aus.
+   Dauer in Schritten (60 pro Sekunde). */
+const DROP_X=270;                  // hier wird sie über der Bahn losgelassen
+const DROP={lift:12,fall:12,hop1:18,hop2:12,roll:48}; // roll: Ausrollen nach dem zweiten Hüpfer
+const DROP_HOPS=[.5,.22];          // Höhe der zwei Nachhüpfer (1 = Fallhöhe)
+const DROP_SCALE=.45,DROP_SHADOW=10,DROP_RING=14; // Grösse in der Luft, Schattenversatz, Dauer eines Aufschlagrings
 const ret={phase:'rack',t:0,y:RET_RACK_Y,a:0,due:false}; // due: Pinsetter setzt ab, Kugel darf kommen
 /* vom Pinsetter aufgerufen, wenn er die Pins absetzt */
 function returnBall(){ret.due=true}
@@ -451,11 +472,29 @@ function moveReturn(){
   if(k>=1)ret.phase='rack';
  }
  else if(ret.phase==='pick'&&++ret.t>=PICK_STEPS)ret.phase='held';
+ else if(ret.phase==='drop'&&dropBall(++ret.t).done)ret.phase='held';
+}
+/* Lage der fallenden Kugel nach t Schritten: {x, y, h, s, ring, done} */
+function dropBall(t){
+ const {lift:L,fall:F,hop1:B1,hop2:B2}=DROP,T=F+B1+B2+DROP.roll,d=DROP_X-spotX,v=2*d/T; // v: Tempo beim Loslassen
+ /* Aufschlagring: jüngster Aufschlag zählt (zuerst der Fall, dann die zwei Hüpfer), später schwächer */
+ const ring=t=>{for(const [i,at] of [F+B1+B2,F+B1,F].entries())if(t>=at)return t-at<DROP_RING?{k:(t-at)/DROP_RING,w:[.4,.6,1][i]}:null;return null};
+ if(t<L){
+  /* anheben und hinübertragen: aus der Ruhe heraus, beim Loslassen schon mit dem Tempo v (dreht sich in der Hand nicht) */
+  const k=t/L,e=k*k*(3-2*k),x=RET_X+(DROP_X-RET_X)*e-v*L*(k*k*k-k*k);
+  return {x,y:RET_RACK_Y+(BALL_Y-RET_RACK_Y)*e,h:Math.sin(Math.PI/2*Math.min(1,k*1.6)),s:d/BR};
+ }
+ t-=L;
+ /* seitwärts: gleichmässig langsamer bis zum Platz; die Drehung endet genau in der Grundstellung */
+ const k=Math.min(1,t/T),x=DROP_X-d*(1-(1-k)**2),hop=(u,a)=>a*4*u*(1-u);
+ /* Höhe: fallen, aufschlagen, zweimal nachhüpfen, dann rollen */
+ const h=t<F?1-(t/F)**2:t<F+B1?hop((t-F)/B1,DROP_HOPS[0]):t<F+B1+B2?hop((t-F-B1)/B2,DROP_HOPS[1]):0;
+ return {x,y:BALL_Y,h,s:(x-spotX)/BR,ring:ring(t),done:k>=1};
 }
 /* Kugel aus der Mulde (oder von dort, wo sie gezogen wurde) an ihren Platz auf der Bahn legen */
 function placeBall(x,from){
  spotX=Math.max(SPOT_MIN,Math.min(SPOT_MAX,x));
- ret.phase='pick';ret.t=0;ret.fx=from?from.x:RET_X;ret.fy=from?from.y:RET_RACK_Y;
+ ret.phase=from||REDUCED?'pick':'drop';ret.t=0;ret.fx=from?from.x:RET_X;ret.fy=from?from.y:RET_RACK_Y;
 }
 const inRack=p=>ret.phase==='rack'&&Math.hypot(p.x-RET_X,p.y-RET_RACK_Y)<GRAB;
 
@@ -563,6 +602,7 @@ const toLane=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.l
 function handBall(){
  if(grabbed)return {x:grabbed.x,y:grabbed.y,a:0,g:false};
  if(ret.phase==='held')return {x:spotX,y:BALL_Y,a:0,g:false};
+ if(ret.phase==='drop')return {...dropBall(ret.t),a:0,g:false};
  if(ret.phase==='pick'){
   /* an den Platz gleiten, aus der Mulde mit kleinem Bogen */
   const k=ret.t/PICK_STEPS,e=k*k*(3-2*k),arc=ret.fx===RET_X&&ret.fy===RET_RACK_Y?14:0;
@@ -645,7 +685,7 @@ canvas.addEventListener('pointerdown',e=>{
   /* Kugel holen und platzieren (beide Steuerungen) */
   const p=toLane(e);
   if(inRack(p)){grabbed={x:p.x,y:p.y,sx:p.x,sy:p.y,moved:false};return}
-  if(ret.phase!=='held'&&ret.phase!=='pick'){
+  if(ret.phase!=='held'&&ret.phase!=='pick'&&ret.phase!=='drop'){
    showToast('Kugel','Zuerst die Kugel aus dem Rücklauf rechts holen.');
    setTimeout(()=>{if(state===READY)toast.classList.remove('on')},1800);
    return;
