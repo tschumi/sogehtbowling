@@ -42,7 +42,7 @@ node --test                   # alle Tests (Node ab 18, keine Pakete)
 ```
 
 - `http://localhost:8000/?test` schaltet den Test-Modus ein: Tasten **X** (Strike), **S** (Spare), **R** (Rinne), fps-Anzeige.
-- **Steuerung** wählen mit `STEUERUNG` oben in `game.js`: `'klassisch'` (zielen und halten) oder `'schleuder'` (Prototyp Steinschleuder: nach hinten ziehen und loslassen). Zum Ausprobieren ohne Codeänderung überschreiben `?schleuder` bzw. `?klassisch` die Einstellung, kombinierbar mit `?test` (z.B. `?schleuder&test`).
+- **Steuerung** wählen mit `STEUERUNG` oben in `game.js`: `'klassisch'` (zielen und halten), `'schleuder'` (Prototyp Steinschleuder: nach hinten ziehen, Kugel läuft in die Gegenrichtung) oder `'schieben'` (Prototyp: nach vorne ziehen, Kugel läuft in Zugrichtung). Zum Ausprobieren ohne Codeänderung überschreiben `?klassisch`, `?schleuder` bzw. `?schieben` die Einstellung, kombinierbar mit `?test` (z.B. `?schleuder&test`).
 - Die Spielanleitung öffnet sich beim ersten Besuch einmal von selbst. Zum erneuten Testen den Eintrag `hg-anleitung` im `localStorage` löschen oder ein privates Fenster nutzen.
 - `tests/layout.test.js` braucht Chrome (Pfad über `CHROME_PATH`), sonst wird er übersprungen.
 - Nach jeder Änderung `node --test` laufen lassen und das Ergebnis ehrlich melden.
@@ -56,7 +56,7 @@ node --test                   # alle Tests (Node ab 18, keine Pakete)
 - **Physik und Regeln ohne DOM:** `physics.js` und `rules.js` dürfen nicht auf `window`, `document` oder Canvas zugreifen. Zufall läuft über den übergebenen `rand`, damit die Simulation deterministisch testbar bleibt.
 - **Inhalte:** Sprüche und Texte gehören in `content.json`, nicht in den Code. Regeln für Sprüche (Töpfe `any`/`schnell`/`sanft`, `{rest}` nur ab zwei Pins, kein „Strike!“ am Anfang) stehen im README.
 - **Steuerung:** Gespielt wird nur mit **Maus oder Touch**. Eine Tastatursteuerung für das Spiel gibt es bewusst nicht (die Bahn ist `role="img"`). Die übrige Seite (Navigation, Anleitung, Schliessen-Knöpfe) bleibt per Tastatur bedienbar.
-- **Bedienhinweise:** Unter der Bahn steht nur eine kurze Zeile. Die ausführliche Erklärung gehört in die Anleitung `#howto` in `index.html` (Info-Knopf). Schritte, die nur für eine Steuerung gelten, mit `data-mode="klassisch"` bzw. `data-mode="schleuder"` markieren.
+- **Bedienhinweise:** Unter der Bahn steht nur eine kurze Zeile. Die ausführliche Erklärung gehört in die Anleitung `#howto` in `index.html` (Info-Knopf). Schritte, die nur für eine Steuerung gelten, mit `data-mode="klassisch"`, `"schleuder"` bzw. `"schieben"` markieren.
 - **Farben:** Die Seite hat nur ein dunkles Farbschema (`color-scheme:dark`, Farben als Variablen in `:root`). Keinen hellen Modus und keine `prefers-color-scheme`-Umschaltung einbauen.
 - **Responsive:** Layout auf Handy (ab 360 px), Tablet und Desktop prüfen. Mobile Ansicht bis 820 px über Container-Queries, das Spiel läuft dort im Vollbild (nach „Zur Bowlingbahn“), Burger-Menü bis 600 px.
 - **Barrierefreiheit:** Animationen respektieren `prefers-reduced-motion` (in CSS und in `game.js` über `REDUCED`). Neue Animationen dort ebenfalls abschalten.

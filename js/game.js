@@ -11,7 +11,8 @@
 
 /* Steuerung: 'klassisch' = zielen, halten, im richtigen Moment loslassen (Stärkebalken)
              'schleuder' = nach hinten ziehen und loslassen wie eine Steinschleuder (Prototyp)
-   Zum Ausprobieren ohne Änderung hier: ?schleuder bzw. ?klassisch in der Adresse */
+             'schieben'  = nach vorne ziehen, wohin die Kugel soll, und loslassen (Prototyp)
+   Zum Ausprobieren ohne Änderung hier: ?klassisch, ?schleuder bzw. ?schieben in der Adresse */
 const STEUERUNG='schleuder';
 
 const P=window.HGPhysics,TUNING=P.TUNING,{W,H,MID,SPOTS,HEAD_Y}=P;
@@ -536,15 +537,18 @@ const updateMeter=()=>{
 /* nach Spielende: erster Klick/Tipp schliesst die Meldung und startet ein neues Spiel, wirft aber nicht */
 const restart=()=>{newGame();toast.classList.remove('on');hideOverlays()};
 
-/* ---------- PROTOTYP Steinschleuder (STEUERUNG='schleuder' oder ?schleuder) ----------
-   Irgendwo auf der Bahn drücken und nach hinten ziehen: Die Kugel zielt in die Gegenrichtung,
-   die Länge des Zugs bestimmt die Wucht. Eine kurze Linie zeigt Richtung und Wucht, bei viel Wucht zittert sie.
+/* ---------- PROTOTYPEN Steinschleuder und Schieben (STEUERUNG bzw. ?schleuder, ?schieben) ----------
+   Steinschleuder: Irgendwo auf der Bahn drücken und nach hinten ziehen: Die Kugel zielt in die Gegenrichtung,
+   die Länge des Zugs bestimmt die Wucht.
+   Schieben: gleich, aber umgekehrt: nach vorne ziehen, die Kugel zielt in die Zugrichtung (nach links gezogen = nach links). Eine kurze Linie zeigt Richtung und Wucht, bei viel Wucht zittert sie.
    Loslassen wirft. Zu kurz gezogen = abgebrochen.
    Kugel holen: Nach jedem Wurf liegt sie im Rücklauf. Ein Klick darauf legt sie in die Mitte der Bahn,
    anfassen und auf die Bahn ziehen legt sie an die gewünschte Stelle. Auf der Bahn lässt sie sich weiter seitlich verschieben.
    Doppeltipp auf die Kugel stellt sie zurück in die Mitte. */
 const URLP=new URLSearchParams(location.search);
-const SLING=URLP.has('schleuder')||(!URLP.has('klassisch')&&STEUERUNG==='schleuder');
+const MODE=['klassisch','schleuder','schieben'].find(m=>URLP.has(m))||STEUERUNG;
+const SLING=MODE==='schleuder'||MODE==='schieben'; // Zug-Steuerung statt Stärkebalken
+const PULL=MODE==='schieben'?-1:1;                // Richtung des Zugs: 1 = nach hinten, -1 = nach vorne
 const BALL_Y=P.BALL_START_Y,SPOT_MIN=84,SPOT_MAX=276,GRAB=30; // GRAB: Trefferzone um die Kugel (Bahn-Einheiten)
 let sling=null;   // {sx,sy,x,y,t,phase} in Bahn-Koordinaten
 let spotX=MID;    // Startposition der Kugel
@@ -566,9 +570,10 @@ function handBall(){
  }
  return null;
 }
-/* Zug: Länge (0–1 = Wucht) und Ziel-x; null, solange nicht nach hinten gezogen */
+/* Zug: Länge (0–1 = Wucht) und Ziel-x; null, solange nicht in die richtige Richtung gezogen.
+   Beim Schieben wird der Zug umgedreht, dann gilt dieselbe Rechnung wie bei der Schleuder. */
 function slingShot(){
- const dx=sling.x-sling.sx,dy=sling.y-sling.sy,len=Math.hypot(dx,dy);
+ const dx=(sling.x-sling.sx)*PULL,dy=(sling.y-sling.sy)*PULL,len=Math.hypot(dx,dy);
  if(dy<=0||len<TUNING.slingMin)return null;
  const p=Math.min(1,len/TUNING.slingPull);
  const t=(performance.now()-sling.t)/1000+sling.phase;
@@ -592,9 +597,9 @@ function drawSling(){
  ctx.setLineDash([]);ctx.fillStyle='rgba(255,122,26,.85)';
  const ux=dx/d,uy=dy/d;
  ctx.beginPath();ctx.moveTo(ex+ux*10,ey+uy*10);ctx.lineTo(ex-uy*6,ey+ux*6);ctx.lineTo(ex+uy*6,ey-ux*6);ctx.fill();
- /* Gummiband von der Kugel zum Finger */
- ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=2;
- ctx.beginPath();ctx.moveTo(spotX,BALL_Y);ctx.lineTo(spotX+(sling.x-sling.sx),BALL_Y+(sling.y-sling.sy));ctx.stroke();
+ /* Gummiband von der Kugel zum Finger (nur Schleuder) */
+ if(PULL>0){ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(spotX,BALL_Y);ctx.lineTo(spotX+(sling.x-sling.sx),BALL_Y+(sling.y-sling.sy));ctx.stroke()}
  ctx.restore();
 }
 /* ---------- Spielanleitung (Info-Knopf) ----------
@@ -606,7 +611,7 @@ function setHowto(open,pinned){
  howto.classList.toggle('open',open);infoBtn.setAttribute('aria-expanded',String(open));howtoPinned=open&&pinned;
 }
 if(infoBtn&&howto&&howto.querySelectorAll){
- howto.querySelectorAll('[data-mode]').forEach(li=>{li.hidden=(li.dataset.mode==='schleuder')!==SLING});
+ howto.querySelectorAll('[data-mode]').forEach(li=>{li.hidden=li.dataset.mode!==MODE});
  infoBtn.addEventListener('click',()=>setHowto(!howtoPinned,true));
  infoBtn.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&!howtoPinned)setHowto(true,false)});
  infoBtn.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&!howtoPinned)setHowto(false,false)});

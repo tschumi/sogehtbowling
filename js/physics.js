@@ -40,8 +40,8 @@ const TUNING={
  powerSweepMs:1300,  // so lange läuft der Stärkebalken von 0 auf 100 %, danach pendelt er zurück
  aimWobble:20,       // Zittern des Zielpunkts bei voller Stärke (bei wenig Stärke rund ein Drittel davon)
 
- /* Steinschleuder (PROTOTYP, Umschalten mit STEUERUNG in game.js oder ?schleuder) */
- slingPull:110,      // so weit zurückziehen (Bahn-Einheiten, Bahn = 560 hoch) für volle Wucht
+ /* Steinschleuder und Schieben (PROTOTYPEN, Umschalten mit STEUERUNG in game.js oder ?schleuder / ?schieben) */
+ slingPull:110,      // so weit ziehen (Bahn-Einheiten, Bahn = 560 hoch) für volle Wucht
  slingAim:.6,        // Zugrichtung → Ziel: 1 = Kugel läuft exakt in Gegenrichtung des Zugs, kleiner = gröber/verzeihender
  slingWobble:14,     // Zittern des Ziels bei voller Wucht (bei wenig Wucht kaum)
  slingMin:12         // kürzerer Zug gilt als abgebrochen
