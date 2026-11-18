@@ -9,12 +9,6 @@
 
 /* ========== Grundlagen ========== */
 
-/* Steuerung: 'klassisch' = zielen, halten, im richtigen Moment loslassen (Stärkebalken)
-             'schleuder' = nach hinten ziehen und loslassen wie eine Steinschleuder (Prototyp)
-             'schieben'  = nach vorne ziehen, wohin die Kugel soll, und loslassen (Prototyp)
-   Zum Ausprobieren ohne Änderung hier: ?klassisch, ?schleuder bzw. ?schieben in der Adresse */
-const STEUERUNG='schieben';
-
 const P=window.HGPhysics,TUNING=P.TUNING,{W,H,MID,SPOTS,HEAD_Y}=P;
 const {marks,scores,total,nextStep,spruchKey,createSay,rating}=window.HGRules;
 
@@ -417,15 +411,16 @@ function drawParticles(){
  particles.forEach(p=>{ctx.fillStyle=p.w?'rgba(255,255,255,'+p.l+')':'rgba(255,170,60,'+p.l+')';drawStar(p.x,p.y,p.s*p.l/2)});
 }
 
-/* Ziellinie: gestrichelter Weg von der Startposition zum Ziel, solange gezielt wird */
+/* Pfeil ab der Kugel Richtung Ziel, solange gezogen wird; Länge zeigt die Wucht */
 function drawAim(){
- if(sling){drawSling();return}
- if(!charge)return;
- const x=aimTarget(),y=HEAD_Y+24;
+ const s=push&&pushShot();if(!s)return;
+ const ty=HEAD_Y+24,dx=s.tx-spotX,dy=ty-BALL_Y,d=Math.hypot(dx,dy),len=50+170*s.p;
+ const ex=spotX+dx/d*len,ey=BALL_Y+dy/d*len,ux=dx/d,uy=dy/d;
  ctx.save();
- ctx.strokeStyle='rgba(255,122,26,.75)';ctx.lineWidth=2;ctx.setLineDash([6,8]);
- ctx.beginPath();ctx.moveTo(startX(),H-36);ctx.lineTo(x,y);ctx.stroke();
- ctx.setLineDash([]);ctx.beginPath();ctx.arc(x,y,7,0,7);ctx.stroke();
+ ctx.strokeStyle='rgba(255,122,26,.85)';ctx.lineWidth=3;ctx.setLineDash([6,7]);
+ ctx.beginPath();ctx.moveTo(spotX,BALL_Y);ctx.lineTo(ex,ey);ctx.stroke();
+ ctx.setLineDash([]);ctx.fillStyle='rgba(255,122,26,.85)';
+ ctx.beginPath();ctx.moveTo(ex+ux*10,ey+uy*10);ctx.lineTo(ex-uy*6,ey+ux*6);ctx.lineTo(ex+uy*6,ey-ux*6);ctx.fill();
  ctx.restore();
 }
 
@@ -544,63 +539,32 @@ function loop(ts){
 }
 
 /* ========== Eingabe ==========
-   Drücken = zielen, Halten = der Stärkebalken pendelt zwischen 0 und 100 %, Loslassen = werfen.
-   Solange man hält, zittert der Zielpunkt leicht, bei viel Stärke mehr.
+   Kugel holen: Nach jedem Wurf liegt sie im Rücklauf. Ein Klick darauf lässt sie in die Mitte der Bahn fallen,
+   anfassen und auf die Bahn ziehen legt sie an die gewünschte Stelle. Auf der Bahn lässt sie sich seitlich verschieben,
+   Doppeltipp stellt sie zurück in die Mitte.
+   Werfen (Schieben): Irgendwo auf der Bahn drücken und nach vorne ziehen. Die Kugel zielt in die Zugrichtung
+   (nach links gezogen = nach links), die Länge des Zugs bestimmt die Wucht. Ein Pfeil zeigt Richtung und Wucht,
+   bei viel Wucht zittert er. Loslassen wirft, zu kurz gezogen = abgebrochen.
    Gespielt wird mit Maus oder Touch, eine Tastatursteuerung gibt es bewusst nicht. */
 
 const powerFill=$('pf'),powerValue=$('pv');
-let charge=null,aimX=MID;
-
-const toLaneX=e=>{const r=canvas.getBoundingClientRect();return Math.max(28,Math.min(332,(e.clientX-r.left)/r.width*W))};
-const startCharge=()=>{charge={t:performance.now(),phase:Math.random()*100}};
-/* Stärke 0–1: läuft hoch, dann wieder runter (Dreieck) */
-const chargeLevel=()=>{
- if(!charge)return 0;
- const s=((performance.now()-charge.t)/TUNING.powerSweepMs)%2;
- return s<=1?s:2-s;
-};
-/* Zittern: unregelmässige Mischung zweier Schwingungen, Stärke wächst mit der Wucht */
-const wobble=()=>{
- if(!charge)return 0;
- const t=(performance.now()-charge.t)/1000+charge.phase,p=chargeLevel();
- return TUNING.aimWobble*(.35+.65*p*p)*(Math.sin(t*5.3)+.6*Math.sin(t*8.9+1.7))/1.6;
-};
-const aimTarget=()=>Math.max(28,Math.min(332,aimX+wobble()));
-const release=()=>{
- if(!charge)return;
- const v=5+8*chargeLevel(),x=aimTarget();
- charge=null;throwBall(x,v,startX());
-};
-/* Im Balken: beim Laden das Tempo. Ob geworfen werden kann, zeigt die Kugel (zurück aus dem Rücklauf). */
+/* Im Balken: beim Ziehen das Tempo. Ob geworfen werden kann, zeigt die Kugel (zurück aus dem Rücklauf). */
 let meterText='';
 const updateMeter=()=>{
- const p=sling?slingLevel():chargeLevel();
- const text=charge||sling?Math.round((5+8*p)*2.8)+' km/h':'';
+ const p=pushLevel();
+ const text=push?Math.round((5+8*p)*2.8)+' km/h':'';
  powerFill.style.width=p*100+'%';
  if(text!==meterText)powerValue.textContent=meterText=text;
 };
 /* nach Spielende: erster Klick/Tipp schliesst die Meldung und startet ein neues Spiel, wirft aber nicht */
 const restart=()=>{newGame();toast.classList.remove('on');hideOverlays()};
 
-/* ---------- PROTOTYPEN Steinschleuder und Schieben (STEUERUNG bzw. ?schleuder, ?schieben) ----------
-   Steinschleuder: Irgendwo auf der Bahn drücken und nach hinten ziehen: Die Kugel zielt in die Gegenrichtung,
-   die Länge des Zugs bestimmt die Wucht.
-   Schieben: gleich, aber umgekehrt: nach vorne ziehen, die Kugel zielt in die Zugrichtung (nach links gezogen = nach links). Eine kurze Linie zeigt Richtung und Wucht, bei viel Wucht zittert sie.
-   Loslassen wirft. Zu kurz gezogen = abgebrochen.
-   Kugel holen: Nach jedem Wurf liegt sie im Rücklauf. Ein Klick darauf legt sie in die Mitte der Bahn,
-   anfassen und auf die Bahn ziehen legt sie an die gewünschte Stelle. Auf der Bahn lässt sie sich weiter seitlich verschieben.
-   Doppeltipp auf die Kugel stellt sie zurück in die Mitte. */
-const URLP=new URLSearchParams(location.search);
-const MODE=['klassisch','schleuder','schieben'].find(m=>URLP.has(m))||STEUERUNG;
-const SLING=MODE==='schleuder'||MODE==='schieben'; // Zug-Steuerung statt Stärkebalken
-const PULL=MODE==='schieben'?-1:1;                // Richtung des Zugs: 1 = nach hinten, -1 = nach vorne
 const BALL_Y=P.BALL_START_Y,SPOT_MIN=84,SPOT_MAX=276,GRAB=30; // GRAB: Trefferzone um die Kugel (Bahn-Einheiten)
-let sling=null;   // {sx,sy,x,y,t,phase} in Bahn-Koordinaten
+let push=null;    // {sx,sy,x,y,t,phase} solange gezogen wird (Bahn-Koordinaten)
 let spotX=MID;    // Startposition der Kugel
 let moving=null;  // {dx} solange die Kugel auf der Bahn verschoben wird
 let grabbed=null; // {x,y,moved} solange die Kugel aus dem Rücklauf geholt wird
 let lastBallTap=0;
-const startX=()=>spotX;
 const setSpot=x=>{spotX=Math.max(SPOT_MIN,Math.min(SPOT_MAX,x))};
 const onBall=p=>ret.phase==='held'&&Math.hypot(p.x-spotX,p.y-BALL_Y)<GRAB;
 const toLane=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H}};
@@ -616,37 +580,22 @@ function handBall(){
  }
  return null;
 }
-/* Zug: Länge (0–1 = Wucht) und Ziel-x; null, solange nicht in die richtige Richtung gezogen.
-   Beim Schieben wird der Zug umgedreht, dann gilt dieselbe Rechnung wie bei der Schleuder. */
-function slingShot(){
- const dx=(sling.x-sling.sx)*PULL,dy=(sling.y-sling.sy)*PULL,len=Math.hypot(dx,dy);
- if(dy<=0||len<TUNING.slingMin)return null;
- const p=Math.min(1,len/TUNING.slingPull);
- const t=(performance.now()-sling.t)/1000+sling.phase;
- const wob=TUNING.slingWobble*p*p*(Math.sin(t*5.3)+.6*Math.sin(t*8.9+1.7))/1.6;
- const tx=spotX-dx/dy*(BALL_Y-HEAD_Y)*TUNING.slingAim+wob;
+/* Zug: Wucht p (0–1) und Ziel-x; null, solange nicht nach vorne gezogen.
+   fx: seitlich (rechts positiv), fy: nach vorne (positiv) */
+function pushShot(){
+ const fx=push.x-push.sx,fy=push.sy-push.y,len=Math.hypot(fx,fy);
+ if(fy<=0||len<TUNING.pushMin)return null;
+ const p=Math.min(1,len/TUNING.pushLen);
+ /* Zittern: unregelmässige Mischung zweier Schwingungen, wächst mit der Wucht */
+ const t=(performance.now()-push.t)/1000+push.phase;
+ const wob=TUNING.pushWobble*p*p*(Math.sin(t*5.3)+.6*Math.sin(t*8.9+1.7))/1.6;
+ const tx=spotX+fx/fy*(BALL_Y-HEAD_Y)*TUNING.pushAim+wob;
  return {p,tx:Math.max(28,Math.min(332,tx))};
 }
-const slingLevel=()=>{const s=sling&&slingShot();return s?s.p:0};
-function slingRelease(){
- const s=slingShot();sling=null;
+const pushLevel=()=>{const s=push&&pushShot();return s?s.p:0};
+function pushRelease(){
+ const s=pushShot();push=null;
  if(s)throwBall(s.tx,5+8*s.p,spotX);
-}
-/* Linie ab der Kugel Richtung Ziel, Länge zeigt die Wucht */
-function drawSling(){
- const s=sling&&slingShot();if(!s)return;
- const ty=HEAD_Y+24,dx=s.tx-spotX,dy=ty-BALL_Y,d=Math.hypot(dx,dy),len=50+170*s.p;
- const ex=spotX+dx/d*len,ey=BALL_Y+dy/d*len;
- ctx.save();
- ctx.strokeStyle='rgba(255,122,26,.85)';ctx.lineWidth=3;ctx.setLineDash([6,7]);
- ctx.beginPath();ctx.moveTo(spotX,BALL_Y);ctx.lineTo(ex,ey);ctx.stroke();
- ctx.setLineDash([]);ctx.fillStyle='rgba(255,122,26,.85)';
- const ux=dx/d,uy=dy/d;
- ctx.beginPath();ctx.moveTo(ex+ux*10,ey+uy*10);ctx.lineTo(ex-uy*6,ey+ux*6);ctx.lineTo(ex+uy*6,ey-ux*6);ctx.fill();
- /* Gummiband von der Kugel zum Finger (nur Schleuder) */
- if(PULL>0){ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=2;
- ctx.beginPath();ctx.moveTo(spotX,BALL_Y);ctx.lineTo(spotX+(sling.x-sling.sx),BALL_Y+(sling.y-sling.sy));ctx.stroke()}
- ctx.restore();
 }
 /* ---------- Spielanleitung (Info-Knopf) ----------
    Klick oder Tipp öffnet und schliesst, mit der Maus öffnet auch Darüberfahren.
@@ -657,7 +606,6 @@ function setHowto(open,pinned){
  howto.classList.toggle('open',open);infoBtn.setAttribute('aria-expanded',String(open));howtoPinned=open&&pinned;
 }
 if(infoBtn&&howto&&howto.querySelectorAll){
- howto.querySelectorAll('[data-mode]').forEach(li=>{li.hidden=li.dataset.mode!==MODE});
  infoBtn.addEventListener('click',()=>setHowto(!howtoPinned,true));
  infoBtn.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&!howtoPinned)setHowto(true,false)});
  infoBtn.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&!howtoPinned)setHowto(false,false)});
@@ -695,7 +643,7 @@ canvas.addEventListener('pointerdown',e=>{
  try{canvas.setPointerCapture(e.pointerId)}catch(_){}
  if(!busy){toast.classList.remove('on');hideOverlays()}
  {
-  /* Kugel holen und platzieren (alle Steuerungen) */
+  /* Kugel holen und platzieren */
   if(inRack(p)){grabbed={x:p.x,y:p.y,sx:p.x,sy:p.y,moved:false};return}
   if(ret.phase!=='held'&&ret.phase!=='pick'&&ret.phase!=='drop'){
    showToast('Kugel','Zuerst die Kugel aus dem Rücklauf rechts holen.');
@@ -708,12 +656,12 @@ canvas.addEventListener('pointerdown',e=>{
    lastBallTap=performance.now();
    moving={dx:p.x-spotX};return;
   }
-  if(SLING){sling={sx:p.x,sy:p.y,x:p.x,y:p.y,t:performance.now(),phase:Math.random()*100};return}
+  /* sonst: Zug zum Werfen beginnen */
+  push={sx:p.x,sy:p.y,x:p.x,y:p.y,t:performance.now(),phase:Math.random()*100};
  }
- aimX=toLaneX(e);startCharge();
 });
 canvas.addEventListener('pointermove',e=>{
- if(sling)Object.assign(sling,toLane(e));
+ if(push)Object.assign(push,toLane(e));
  else if(grabbed){
   const p=toLane(e);grabbed.x=p.x;grabbed.y=p.y;
   if(Math.hypot(p.x-grabbed.sx,p.y-grabbed.sy)>6)grabbed.moved=true;
@@ -728,9 +676,9 @@ canvas.addEventListener('pointerup',e=>{
   placeBall(g.moved?g.x:MID,g.moved?g:null);return;
  }
  if(moving){moving=null;return}
- if(sling){Object.assign(sling,toLane(e));slingRelease()}else release();
+ if(push){Object.assign(push,toLane(e));pushRelease()}
 });
-canvas.addEventListener('pointercancel',()=>{charge=null;sling=null;moving=null;grabbed=null});
+canvas.addEventListener('pointercancel',()=>{push=null;moving=null;grabbed=null});
 laneWrap.addEventListener('pointerdown',dismiss);
 
 /* ========== Test-Modus (nur mit ?test in der Adresse) ==========

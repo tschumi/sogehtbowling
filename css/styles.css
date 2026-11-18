@@ -116,7 +116,7 @@ button:disabled{opacity:.45;cursor:default}
 .howto{position:absolute;left:8px;right:8px;top:8px;z-index:6;background:rgba(11,14,28,.95);border:2px solid var(--acc);border-radius:12px;padding:12px 14px;color:var(--cream);font-size:.8rem;line-height:1.4;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .2s,transform .2s,visibility .2s}
 .howto.open{opacity:1;visibility:visible;transform:none}
 .howto>b{display:block;font:400 1rem/1.2 "Bowlby One","Arial Black",sans-serif;color:var(--acc);margin-bottom:6px}
-.howto ol{margin:0;padding-left:1.2em}.howto li{margin:5px 0}.howto li[hidden]{display:none}.howto em{font-style:normal;font-weight:700;color:var(--acc)}
+.howto ol{margin:0;padding-left:1.2em}.howto li{margin:5px 0}.howto em{font-style:normal;font-weight:700;color:var(--acc)}
 .scroll{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--dim);font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;transition:opacity .4s}.scroll:hover{color:var(--cream)}.scroll svg{color:var(--acc);animation:bob 1.8s ease-in-out infinite}.scroll.hide{opacity:0;pointer-events:none}@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
 /* Team */
 .team{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:40px 24px}
