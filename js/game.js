@@ -138,7 +138,7 @@ function runPinsetter(){
 function newGame(){
  frames=Array.from({length:10},()=>[]);
  frameNo=1;ballInFrame=1;gameOver=false;
- renderSheet();renderDots();
+ renderSheet();
 }
 
 /* Wurf starten: tx = Ziel-x, pwr = Tempo (5 bis 13), sx = Start-x */
@@ -179,7 +179,7 @@ function scoreThrow(){
   if(next==='frame'){planReset(false);ballInFrame=1;frameNo++}
   else if(next==='end'){planReset(false);ballInFrame=1}
   else{planReset(next==='keep');ballInFrame++}
-  renderSheet();renderDots();
+  renderSheet();
  };
  state=SHOWING;msgOpen=true;reset=RESET_PENDING;
  setTimeout(startReset,900);
@@ -223,12 +223,6 @@ function renderSheet(){
  const tot=total(frames);
  $('sheet').setAttribute('aria-label','Spielstand: Frame '+Math.min(frameNo,10)+', '+tot+' Punkte');
  return tot;
-}
-/* Im 10. Frame erscheint der dritte Punkt, sobald der Bonuswurf verdient ist (Strike oder Spare) */
-function renderDots(){
- const d=document.querySelector('.dots'),r=frames[9]||[],bonus=r[0]===10||r[0]+r[1]>=10;
- d.classList.toggle('three',frameNo===10&&!gameOver&&(ballInFrame===3||bonus));
- d.querySelectorAll('i').forEach((x,i)=>x.classList.toggle('on',i<ballInFrame));
 }
 
 /* ========== Zeichnen ========== */
