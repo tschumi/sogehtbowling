@@ -273,8 +273,11 @@ let laneLogo=null; // {img, x, y, w, h} in Bahn-Koordinaten
  };
  const HIDE='#Claim{display:none}'+(LANE_LOGO.diamond?'':'#Frame{display:none}')+(LANE_LOGO.pins?'':'#Pins,#Shadow,#Ball{display:none}');
  const DUST='#Fairy-dust path{animation:none!important;opacity:1!important}';
- /* ?v= wie in index.html: bei Änderungen am Logo beide hochzählen, damit Browser die neue Datei laden */
- fetch('assets/logo.svg?v=2').then(r=>r.text()).then(svg=>Promise.all([
+ /* ?v= wie in index.html: bei Änderungen am Logo beide hochzählen, damit Browser die neue Datei laden.
+    Eigene Adresse (&bahn): Holt fetch dieselbe Adresse wie das Logo oben auf der Seite, hört dieses
+    in Safari auf dem iPhone auf zu funkeln. Animationen braucht die Bahn nicht, darum werden sie entfernt. */
+ const still=svg=>svg.replace(/<style>[\s\S]*?<\/style>/,'<style></style>').replace(/animation:[^;"]*;?/g,'');
+ fetch('assets/logo.svg?v=2&bahn').then(r=>r.text()).then(still).then(svg=>Promise.all([
   render(svg,HIDE+'#Fairy-dust{display:none}'), // ohne Feenstaub, für Grösse und Lage
   render(svg,HIDE+DUST),                         // mit Feenstaub, für den Ausschnitt
   render(svg,HIDE+DUST+'#Pins,#Frame,#Shadow,#Ball,#Text1{display:none}') // nur Feenstaub
