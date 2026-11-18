@@ -143,27 +143,37 @@
     "strike": {
       "any": [
         "So geht Bowling!",
-        "So geht Bowling... Punkt.. ch!"
+        "So geht Bowling... Punkt.. ch!",
+        "Another one bites the dust!"
       ],
       "schnell": [
-        "Vollgas! Die Pins hatten keine Chance.",
-        "Hat die Wand gehalten?"
+        "Vollgas! So geht Bowling!",
+        "Hui! Hat die Wand gehalten?",
+        "Yippie-ya-yeah, Schweinebacke",
+        "Hasta la vista, Pins."
       ],
       "sanft": [
-        "Strike im Schritttempo. Die Pins sind freiwillig aus Langeweile umgefallen."
+        "Strike im Schritttempo. Die Pins sind freiwillig aus Langeweile umgefallen.",
+        "Gemächlich, aber die Pins haben es überlebt."
       ]
     },
     "rinne1": {
       "any": [
         "Der Feenstaub war wohl leer.",
         "Rinne. Die Bahn war schuld.",
-        "Direkt in die Rinne. Mutig."
+        "Direkt in die Rinne. Mutig.",
+        "Sogar Dieter würde besser bohlen.",
+        "'Dini Mueter' ... würds sogar besser mache."
       ],
       "schnell": [
-        "Viel Tempo, wenig Richtung. Rinne."
+        "Viel Tempo, wenig Richtung. Rinne.",
+        "Auch ein Weg schneller zum Bier zu kommen.",
+        "Vielleicht bist du ja im Stricken besser."
       ],
       "sanft": [
-        "Sanft in die Rinne gerollt. Wenigstens elegant."
+        "Sanft in die Rinne gerollt. Wenigstens elegant.",
+        "Jo nei. You dream, du!",
+        "Stranger Phins: Die stehen einfach so da."
       ]
     },
     "luft1": {
@@ -172,22 +182,27 @@
         "Ein Spare ist noch möglich."
       ],
       "schnell": [
-        "Schnell, aber komplett daneben. Geschwindigkeit ist nicht alles."
+        "Schnell, aber komplett daneben. Geschwindigkeit ist nicht alles.",
+        "Schnell ins Verderben."
       ],
       "sanft": [
-        "Zu sanft. Die Kugel hat die Pins nur von weitem gegrüsst."
+        "Zu sanft. Die Kugel hat die Pins nur von weitem gegrüsst.",
+        "Dies ist keine Entspannungs Yoga-Übung."
       ]
     },
     "wenig1": {
       "any": [
         "Ein Spare ist noch möglich.",
-        "Ein paar Pins sind gefallen. Der zweite Wurf macht es bestimmt besser."
+        "Ein paar Pins sind gefallen. Der zweite Wurf macht es bestimmt besser.",
+        "Immerhin kein Nuller!"
       ],
       "schnell": [
         "Wucht ist nicht alles. Ein Spare ist noch drin."
       ],
       "sanft": [
-        "Mit etwas mehr Schwung ist da noch was drin."
+        "Mit etwas mehr Schwung ist da noch was drin.",
+        "Sanft wie eine Feder!",
+        "Nach Hause telebollieren."
       ]
     },
     "mittel1": {
@@ -196,74 +211,92 @@
         "Anständig. Die Pins diskutieren noch."
       ],
       "schnell": [
-        "Schnell, aber nur die Hälfte. Geschwindigkeit ist nicht alles."
+        "Schnell, aber nur die Hälfte. Geschwindigkeit ist nicht alles.",
+        "Soweit so gut. Da geht noch was.",
+        "Ist für dich jetzt das Glas halb voll oder halb leer?"
       ],
       "sanft": [
-        "Sanft, aber immerhin ein paar Pins. Jetzt etwas Mut."
+        "Sanft, aber immerhin ein paar Pins. Jetzt mit etwas Mut.",
+        "Zum Glück können die Pins nich lachen."
       ]
     },
     "mitte1": {
       "any": [
         "Ab durch die Mitte. Die Aussenpins schauen gespannt auf den zweiten Wurf.",
-        "So, die Mitte wäre frei."
+        "So, die Mitte wäre frei.",
+        "Ich habe da ein ganz mieses Gefühl bei diesem Split.",
+        "Houston, wir haben ein Problem."
       ]
     },
     "viel1": {
       "any": [
-        "Fast aufgeräumt. Nur noch {rest} übrig, das Spare liegt bereit."
+        "Fast aufgeräumt. Nur noch {rest} übrig, das Spare liegt bereit.",
+        "I'll be back.. für den Spare."
       ],
       "schnell": [
-        "Mit Wucht fast alles abgeräumt. Nur noch {rest} übrig."
+        "Mit Wucht fast alles abgeräumt. Nur noch {rest} übrig.",
+        "Du Wuchtbombe, du!"
       ],
       "sanft": [
-        "Sanft und trotzdem fast alles. Nur noch {rest} übrig."
+        "Sanft und trotzdem fast alles. Nur noch {rest} übrig.",
+        "Solid aber zum Einschlafen."        
       ]
     },
     "neun1": {
       "any": [
         "So knapp. Der letzte Pin hat sich gewehrt.",
-        "Nur noch einer übrig. Der Spare ist fast geschenkt."
+        "Nur noch einer übrig. Der Spare ist fast geschenkt.",
+        "Dich erwischt es auch noch. Kleines Schweinchen."
       ],
       "schnell": [
-        "Voller Einsatz, aber einer hat sich versteckt."
+        "Voller Einsatz, aber einer hat sich noch versteckt.",
+        "I’m still standing!"
       ],
       "sanft": [
-        "Ganz sanft, aber einer ist stehen geblieben."
+        "Ganz sanft, aber einer ist stehen geblieben.",
+        "Arbeitest du als Hypnotiseur? Die Pins gehorchen dir fast zu gut."
       ]
     },
     "spare": {
       "any": [
         "So geht Bowling!",
         "Geht doch.",
-        "Die letzten Pins hatten keine Chance."
+        "Ich liebe es, wenn ein Plan funktioniert."
       ],
       "schnell": [
-        "Mit Tempo. Das haben die Pins nicht kommen sehen."
+        "Mit Tempo. Das haben die Pins nicht kommen sehen.",
+        "Warum nicht gleich so?"
       ],
       "sanft": [
-        "Ganz sanft. Der letzte Pin ist fast freiwillig gefallen."
+        "Ganz sanft. Der letzte Pin ist fast freiwillig gefallen.",
+        "Die Pinns sind vor Langeweile umgefallen."
       ]
     },
     "rinne2": {
       "any": [
         "Rinne im zweiten Wurf. Der Spare ist weg.",
-        "Die Rinne hat den Rest erledigt."
+        "Die Rinne hat den Rest erledigt.",
+        "Du hast nicht daneben geworfen, nur die Stabilität der Rinne getestet."
       ],
       "schnell": [
-        "Zu viel Tempo, zu wenig Bahn. Der Spare ist weg."
+        "Zu viel Tempo, zu wenig Bahn. Der Spare ist weg.",
+        "Ist das das Drehbuch für Fast & Furious 12?",
+        "Stairway to Heaven."
       ]
     },
     "luft2": {
       "any": [
         "Kein Spare. Die Restpins bleiben standhaft.",
         "Leider daneben. Die Restpins lachen.",
-        "War was?"
+        "Huch, ein Luftzug. War was?"
       ],
       "schnell": [
-        "Geschwindigkeit ist nicht alles. Die Restpins stehen noch."
+        "Geschwindigkeit ist nicht alles. Die Restpins stehen noch.",
+        "Schnelligkeit anstatt Präzision."
       ],
       "sanft": [
-        "Zu sanft für die Restpins. Die stehen noch."
+        "Zu sanft für die Restpins. Die stehen noch.",
+        "Sanft, aber das war's dann auch."
       ]
     },
     "knapp2": {
@@ -272,10 +305,12 @@
         "So knapp. Der letzte Pin bleibt trotzig stehen."
       ],
       "schnell": [
-        "Voller Einsatz, aber der letzte Pin bleibt stehen."
+        "Voller Einsatz, aber der letzte Pin bleibt stehen.",
+        "Der letzte Pin trotzt allen Bemühungen."
       ],
       "sanft": [
-        "Sanft versucht, einer steht noch."
+        "Sanft versucht, einer steht noch.",
+        "Der letzte Pin bleibt standhaft."
       ]
     },
     "rest2gut": {
@@ -283,7 +318,8 @@
         "Starke Runde. Nur noch {rest} übrig."
       ],
       "schnell": [
-        "Mit Tempo aufgeräumt, aber {rest} stehen noch."
+        "Mit Tempo aufgeräumt, aber {rest} stehen noch.",
+        "Flash, ah-ha!"
       ]
     },
     "rest2mittel": {
@@ -300,10 +336,12 @@
     "rest2schwach": {
       "any": [
         "Immerhin ein paar Pins. {rest} stehen noch.",
-        "Das war nicht die Runde des Jahres."
+        "Das war wohl nicht die Runde des Jahres.",
+        "Chasch's nid besser.. aber villicht länger."
       ],
       "schnell": [
-        "Viel Wucht, wenig Pins. {rest} stehen noch."
+        "Viel Wucht, wenig Pins. {rest} stehen noch.",
+        "Ich dachte ja, das wird noch ein Strike."
       ]
     },
     "ende0": {
