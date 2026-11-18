@@ -196,8 +196,9 @@ const dismiss=()=>{
 function step(){
  runPinsetter();
  if(reset===RESET_RUNNING&&!jobs.length)reset=RESET_NONE;
- /* bereit für den nächsten Wurf, wenn Pinsetter fertig und Meldung zu */
- if(state===SHOWING&&!reset&&!msgOpen&&ret.phase==='rack'){
+ /* bereit für den nächsten Wurf, wenn Pinsetter fertig, Meldung zu und die Kugel zurück
+    (in der Mulde oder schon vom Spieler geholt) */
+ if(state===SHOWING&&!reset&&!msgOpen&&['rack','pick','drop','held'].includes(ret.phase)){
   state=READY;
   if(gameOver)comicTitle('end',String(finalScore),('Punkte! '+rating(wertung,finalScore)).trim());
  }
@@ -670,14 +671,16 @@ if(infoBtn&&howto&&howto.querySelectorAll){
 }
 
 canvas.addEventListener('pointerdown',e=>{
- if(state!==READY)return;
+ /* Kugel holen und auf der Bahn verschieben geht schon, während der Pinsetter noch arbeitet;
+    werfen erst, wenn alles bereit ist */
+ const p=toLane(e),busy=state!==READY;
+ if(busy&&!inRack(p)&&!onBall(p))return;
  e.preventDefault();
- if(gameOver){restart();return}
+ if(!busy&&gameOver){restart();return}
  try{canvas.setPointerCapture(e.pointerId)}catch(_){}
- toast.classList.remove('on');hideOverlays();
+ if(!busy){toast.classList.remove('on');hideOverlays()}
  {
-  /* Kugel holen und platzieren (beide Steuerungen) */
-  const p=toLane(e);
+  /* Kugel holen und platzieren (alle Steuerungen) */
   if(inRack(p)){grabbed={x:p.x,y:p.y,sx:p.x,sy:p.y,moved:false};return}
   if(ret.phase!=='held'&&ret.phase!=='pick'&&ret.phase!=='drop'){
    showToast('Kugel','Zuerst die Kugel aus dem Rücklauf rechts holen.');
@@ -701,7 +704,7 @@ canvas.addEventListener('pointermove',e=>{
   if(Math.hypot(p.x-grabbed.sx,p.y-grabbed.sy)>6)grabbed.moved=true;
  }
  else if(moving)setSpot(toLane(e).x-moving.dx);
- else if(e.pointerType==='mouse'){const p=toLane(e);canvas.style.cursor=state===READY&&(onBall(p)||inRack(p))?'grab':''}
+ else if(e.pointerType==='mouse'){const p=toLane(e);canvas.style.cursor=onBall(p)||inRack(p)?'grab':''}
 });
 canvas.addEventListener('pointerup',e=>{
  if(grabbed){

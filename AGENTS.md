@@ -30,7 +30,7 @@ Website des Fun-Bowlingteams **Hoppi Galoppi Solutions** (sogehtbowling.ch) mit 
 ### Spielablauf in Kürze
 
 - Zustände: `READY → ROLLING → SCORING → SHOWING → READY`. Geworfen werden kann nur in `READY`.
-- **Kugelrücklauf** (Objekt `ret`, Phasen `rack → out → under → roll → rack`, beim Hinlegen `pick` (gezogen) bzw. `drop` (angeklickt: fällt, hüpft, rollt; Einstellungen `DROP…`) `→ held`): Die Kugel kommt erst zurück, wenn der Pinsetter die Pins absetzt (Auftrag `returnBall` in `planReset`). `READY` gibt es erst, wenn sie in der Mulde liegt.
+- **Kugelrücklauf** (Objekt `ret`, Phasen `rack → out → under → roll → rack`, beim Hinlegen `pick` (gezogen) bzw. `drop` (angeklickt: fällt, hüpft, rollt; Einstellungen `DROP…`) `→ held`): Die Kugel kommt erst zurück, wenn der Pinsetter die Pins absetzt (Auftrag `returnBall` in `planReset`). `READY` gibt es erst, wenn sie zurück ist (in der Mulde oder schon geholt). Holen und Verschieben geht schon, während der Pinsetter noch arbeitet, werfen erst in `READY`.
 - Der Spieler holt die Kugel selbst aus dem Rücklauf (Klick = Mitte, Ziehen = eigene Position) und kann sie auf der Bahn seitlich verschieben. Der Startpunkt geht als `sx` an `lane.launch(tx, v, sx)`.
 - **Bahnlogo:** Einstellungen im Block `LANE_LOGO` in `game.js` (Lage, Grösse, Deckkraft, Brauntöne, mit oder ohne Raute bzw. Kugel und Pins). Es wird aus `assets/logo.svg` erzeugt und blendet dafür die SVG-Gruppen `#Claim`, `#Frame` (Raute), `#Pins`, `#Ball`, `#Shadow` und `#Fairy-dust` per CSS aus bzw. ein. Diese IDs im SVG nicht umbenennen.
 
