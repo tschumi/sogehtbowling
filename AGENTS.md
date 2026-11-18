@@ -25,7 +25,7 @@ Website des Fun-Bowlingteams **Hoppi Galoppi Solutions** (sogehtbowling.ch) mit 
 
 `rules.js`, `comics.js` und `physics.js` sind UMD-Module: im Browser globale Objekte, in Node per `require`.
 
-`game.js` ist in Abschnitte mit `/* ========== … ========== */` gegliedert: Spielzustand, Pinsetter, Ablauf, Zeichnen (inkl. Bahnlogo), Kugelrücklauf, Hauptschleife, Eingabe, Test-Modus, Start.
+`game.js` ist in Abschnitte mit `/* ========== … ========== */` gegliedert: Spielzustand, Pinsetter, Ablauf, Zeichnen (inkl. Bahnlogo), Kugelrücklauf, Hauptschleife, Eingabe, Start.
 
 ### Spielablauf in Kürze
 
@@ -41,7 +41,6 @@ python3 -m http.server 8000   # lokal ansehen: http://localhost:8000 (fetch brau
 node --test                   # alle Tests (Node ab 18, keine Pakete)
 ```
 
-- `http://localhost:8000/?test` schaltet den Test-Modus ein: Tasten **X** (Strike), **S** (Spare), **R** (Rinne), fps-Anzeige.
 - Die Spielanleitung öffnet sich beim ersten Besuch einmal von selbst. Zum erneuten Testen den Eintrag `hg-anleitung` im `localStorage` löschen oder ein privates Fenster nutzen.
 - `tests/layout.test.js` braucht Chrome (Pfad über `CHROME_PATH`), sonst wird er übersprungen.
 - Nach jeder Änderung `node --test` laufen lassen und das Ergebnis ehrlich melden.

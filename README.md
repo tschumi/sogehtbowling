@@ -64,8 +64,6 @@ python3 -m http.server 8000
 
 und `http://localhost:8000` öffnen.
 
-**Test-Modus:** Mit `?test` in der Adresse (`http://localhost:8000/?test`) gibt es Tasten für den nächsten Wurf: **X** = Strike, **S** = Spare, **R** = Rinne. Oben rechts auf der Bahn steht die Bildrate (fps). Ohne `?test` ist beides aus.
-
 **Vorschau aller Sprüche:** `http://localhost:8000/tests/vorschau.html` zeigt jeden Spruch aus `content.json` in seiner echten Einblendung. Rot markiert = Text passt nicht in die Form, gelb = Schrift musste auf die Mindestgrösse schrumpfen. Praktisch nach dem Bearbeiten der Sprüche.
 
 ## Tests

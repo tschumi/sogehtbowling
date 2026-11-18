@@ -43,7 +43,6 @@ let lastV=9;           // Tempo des letzten Wurfs (für Tempo-Sprüche)
 let tick=0;            // Schrittzähler (für das Wackeln der Pins)
 let frames=[],frameNo=1,ballInFrame=1,gameOver=false,finalScore=0;
 let msgOpen=false,msgTimer=0;
-let cheat=0;           // Test-Tasten (siehe unten)
 
 /* ========== Partikel (nur Grafik) ========== */
 
@@ -143,8 +142,6 @@ function throwBall(tx,pwr,sx=MID){
  toast.classList.remove('on');hideOverlays();
  tx=Math.max(28,Math.min(332,tx));
  const v=lastV=pwr||9;
- applyCheat();
- if(cheat==='r'){cheat=0;tx=40;sx=MID}
  lane.launch(tx,v,sx);
  ret.phase='out';ret.due=false;
 }
@@ -524,7 +521,7 @@ function drawReturn(){
    Fester Physik-Takt (60/s), unabhängig von der Bildrate: fehlen Bilder, werden Schritte nachgeholt */
 
 const STEP=1000/60;
-let acc=0,last=0,fpsN=0,fpsT=0,fpsEl=null;
+let acc=0,last=0;
 function loop(ts){
  if(!document.hidden&&last){
   acc+=Math.min(ts-last,250);
@@ -534,7 +531,6 @@ function loop(ts){
   draw();updateMeter();
  }
  last=ts;
- if(fpsEl){fpsN++;if(ts-fpsT>=1000){fpsEl.textContent=Math.round(fpsN*1000/(ts-fpsT))+' fps';fpsN=0;fpsT=ts}}
  requestAnimationFrame(loop);
 }
 
@@ -680,34 +676,6 @@ canvas.addEventListener('pointerup',e=>{
 });
 canvas.addEventListener('pointercancel',()=>{push=null;moving=null;grabbed=null});
 laneWrap.addEventListener('pointerdown',dismiss);
-
-/* ========== Test-Modus (nur mit ?test in der Adresse) ==========
-   Tasten für den nächsten Wurf: X = Strike, S = Spare, R = Rinne. Oben rechts die Bildrate. */
-
-const TEST=new URLSearchParams(location.search).has('test');
-const CHEATS={x:'Strike',s:'Spare',r:'Rinne'};
-function applyCheat(){
- const pins=lane.pins;
- if(cheat==='x'){cheat=0;pins.forEach(p=>{p.d=true;p.r=R(-1,1)})}
- else if(cheat==='s'){
-  /* erster Wurf: zwei Pins bleiben stehen, zweiter Wurf räumt ab */
-  const st=pins.filter(p=>!p.d).sort(()=>Math.random()-.5).slice(0,pins.length===10?2:0);
-  pins.forEach(p=>{if(!st.includes(p)){p.d=true;p.r=R(-1,1)}});
-  cheat=pins.length===10?'s2':0;
- }
- else if(cheat==='s2'&&pins.length<10){cheat=0;pins.forEach(p=>{p.d=true;p.r=R(-1,1)})}
-}
-if(TEST){
- addEventListener('keydown',e=>{
-  const k=(e.key||'').toLowerCase();
-  if(!CHEATS[k]||e.ctrlKey||e.metaKey)return;
-  cheat=k;
-  if(state===READY){showToast('Test','Nächster Wurf = '+CHEATS[k]);setTimeout(()=>{if(state===READY)toast.classList.remove('on')},1500)}
- });
- fpsEl=document.createElement('div');
- fpsEl.style.cssText='position:absolute;right:6px;top:6px;z-index:5;font:700 11px "Space Grotesk",sans-serif;color:#fff;background:rgba(0,0,0,.55);padding:2px 6px;border-radius:4px;pointer-events:none';
- laneWrap.appendChild(fpsEl);
-}
 
 /* ========== Start ========== */
 
