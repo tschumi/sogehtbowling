@@ -241,14 +241,14 @@ const LANE_LOGO={
  x:180,       // Mitte des Logos, waagrecht (kleiner = nach links)
  bottom:456,  // Unterkante des Logos ohne Feenstaub (kleiner = weiter nach oben)
  w:176,       // Breite des Logos (ohne Feenstaub), die Höhe passt sich an
- alpha:.18,   // Deckkraft: wie stark das Logo durch den Lack scheint
+ alpha:.24,   // Deckkraft: wie stark das Logo durch den Lack scheint
  dustAlpha:.00, // Deckkraft des Feenstaubs (weiss auf hellem Holz braucht mehr)
  brown:true,  // true = in Brauntönen (wie eingelegt ins Holz), false = Originalfarben
  diamond:false, // true = mit Raute, false = ohne
  pins:true    // true = mit Kugel und Pins, false = nur Schriftzug
 };
 /* Brauntöne von dunkel bis hell: Helligkeit des Logos wird auf diese Skala abgebildet */
-const LOGO_DARK=[62,30,8],LOGO_LIGHT=[255,236,200];
+const LOGO_DARK=[160,110,58],LOGO_LIGHT=[255,236,200];
 let laneLogo=null; // {img, x, y, w, h} in Bahn-Koordinaten
 (function loadLaneLogo(){
  const BIG=1600;
