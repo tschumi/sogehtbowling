@@ -646,7 +646,7 @@ function drawSling(){
 }
 /* ---------- Spielanleitung (Info-Knopf) ----------
    Klick oder Tipp öffnet und schliesst, mit der Maus öffnet auch Darüberfahren.
-   Escape oder ein Klick daneben schliesst. Beim allerersten Besuch geht sie einmal von selbst auf. */
+   Escape oder ein Klick auf die Anleitung oder daneben schliesst. Beim allerersten Besuch geht sie einmal von selbst auf. */
 const infoBtn=document.querySelector('.hint .info'),howto=$('howto');
 let howtoPinned=false; // per Klick geöffnet (bleibt offen, bis man schliesst)
 function setHowto(open,pinned){
@@ -657,9 +657,13 @@ if(infoBtn&&howto&&howto.querySelectorAll){
  infoBtn.addEventListener('click',()=>setHowto(!howtoPinned,true));
  infoBtn.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&!howtoPinned)setHowto(true,false)});
  infoBtn.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&!howtoPinned)setHowto(false,false)});
+ /* Klick oder Tipp auf die Anleitung oder daneben schliesst sie. Auf der Bahn löst dieser Klick nichts weiter aus
+    (kein Wurf, Kugel wird nicht geholt), darum schon in der Capture-Phase abfangen. Der Info-Knopf schaltet selbst um. */
  document.addEventListener('pointerdown',e=>{
-  if(howto.classList.contains('open')&&!howto.contains(e.target)&&!infoBtn.contains(e.target))setHowto(false,false);
- });
+  if(!howto.classList.contains('open')||infoBtn.contains(e.target))return;
+  setHowto(false,false);
+  if(laneWrap.contains(e.target)){e.stopPropagation();e.preventDefault()}
+ },true);
  /* Escape schliesst nur die Anleitung (nicht gleich das ganze Spiel auf dem Handy) */
  addEventListener('keydown',e=>{
   if(e.key==='Escape'&&howto.classList.contains('open')){e.stopPropagation();setHowto(false,false)}
