@@ -426,12 +426,18 @@ function drawAim(){
 }
 
 function draw(){
+ /* Boden wackelt kurz, wenn die Kugel aus dem Rücklauf auf die Bahn fällt (die Kugel selbst nicht) */
+ const ring=ret.phase==='drop'&&dropBall(ret.t).ring,q=ring?DROP_SHAKE*ring.w*(1-ring.k)**2:0;
+ ctx.fillStyle='#0b0e1c';ctx.fillRect(0,0,W,H);
+ ctx.save();
+ if(q)ctx.translate(q*.4*Math.sin(tick*1.7),q*Math.sin(tick*2.3));
  drawLane();
  drawReturn();
  drawAim();
  lane.pins.forEach(drawPin);
  drawTable();
  drawRake();
+ ctx.restore();
  drawBall();
  drawParticles();
 }
@@ -454,6 +460,7 @@ const DROP_X=270;                  // hier wird sie über der Bahn losgelassen
 const DROP={lift:12,fall:12,hop1:18,hop2:12,roll:48}; // roll: Ausrollen nach dem zweiten Hüpfer
 const DROP_HOPS=[.5,.22];          // Höhe der zwei Nachhüpfer (1 = Fallhöhe)
 const DROP_SCALE=.45,DROP_SHADOW=10,DROP_RING=14; // Grösse in der Luft, Schattenversatz, Dauer eines Aufschlagrings
+const DROP_SHAKE=1.8;              // so stark wackelt der Boden beim ersten Aufschlag (Bahn-Einheiten), bei den Hüpfern weniger
 const ret={phase:'rack',t:0,y:RET_RACK_Y,a:0,due:false}; // due: Pinsetter setzt ab, Kugel darf kommen
 /* vom Pinsetter aufgerufen, wenn er die Pins absetzt */
 function returnBall(){ret.due=true}
