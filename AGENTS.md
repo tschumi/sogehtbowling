@@ -22,6 +22,7 @@ Website des Fun-Bowlingteams **Hoppi Galoppi Solutions** (sogehtbowling.ch) mit 
 | `js/physics.js` | `HGPhysics`: Kugel, Pins, Zusammenstösse und der Block `TUNING`. Ohne DOM, in Node testbar |
 | `js/game.js` | Ablauf eines Wurfs, Pinsetter, Kugelrücklauf, Bahnlogo, Zeichnen auf dem Canvas, Eingabe, Spielanleitung (Info-Knopf) |
 | `tests/` | `node --test`-Tests und `vorschau.html` (Vorschau aller Sprüche) |
+| `assets/og.png` | Vorschaubild beim Teilen (1200 × 630), eingebunden über die `og:`-Angaben in `index.html`. Bei neuem Bild `?v=` hochzählen |
 
 `rules.js`, `comics.js` und `physics.js` sind UMD-Module: im Browser globale Objekte, in Node per `require`.
 

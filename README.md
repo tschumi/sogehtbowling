@@ -14,6 +14,7 @@ js/comics.js      Comic-Einblendungen: Sprechblase, Spare-, Strike- und Abschlus
 js/physics.js     Physik ohne Grafik: Kugel, Pins, Zusammenstösse, Einstellungen
 js/game.js        Das Bowling-Spiel: Ablauf eines Wurfs, Pinsetter, Zeichnen, Eingabe
 assets/logo.svg   Logo inkl. funkelndem Feenstaub
+assets/og.png     Vorschaubild beim Teilen auf Social Media (1200 × 630)
 tests/            Automatische Tests und Vorschau aller Sprüche (siehe „Tests“)
 ```
 
@@ -89,6 +90,10 @@ Am besten vor jedem Veröffentlichen laufen lassen, vor allem nach Änderungen a
 4. Eigene Domain: unter **Settings → Pages → Custom domain** `sogehtbowling.ch` eintragen und beim Domain-Anbieter die DNS-Einträge setzen, die GitHub dort anzeigt. Danach „Enforce HTTPS“ aktivieren.
 
 Jede gespeicherte Änderung (auch direkt im Browser auf github.com, z.B. an `content.json`) wird automatisch neu veröffentlicht.
+
+## Vorschau beim Teilen
+
+Wird der Link auf Social Media oder in Messengern geteilt, erscheint `assets/og.png` als Vorschaubild, dazu Titel und Beschreibung aus den `og:`-Angaben im Kopf von `index.html`. Ein neues Bild muss 1200 × 630 Pixel gross sein, das Wichtigste gehört in die Mitte (manche Apps schneiden quadratisch zu). Nach dem Austauschen die Zahl in `og.png?v=…` hochzählen, sonst zeigen Facebook, LinkedIn und Co. noch lange das alte Bild. Prüfen lässt sich die Vorschau z.B. mit [opengraph.xyz](https://www.opengraph.xyz).
 
 ## Schriften
 
