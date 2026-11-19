@@ -35,6 +35,7 @@ Fast alles, was sich ändert, steht in **`content.json`**. HTML oder JavaScript 
   - Situationen beim ersten Wurf: `strike`, `rinne1`, `luft1` (nichts getroffen), `wenig1`, `mittel1`, `viel1`, `neun1`, `mitte1` (nur die Aussenpins stehen)
   - beim zweiten Wurf: `spare`, `rinne2`, `luft2`, `knapp2` (einer bleibt stehen), `rest2gut`, `rest2mittel`, `rest2schwach`
   - letzter Wurf im 10. Frame auf neue Pins: `ende0`, `ende_wenig`, `ende_viel`
+  - `keinekugel`: Klick auf die Bahn, bevor die Kugel aus dem Rücklauf geholt wurde (nur `any`). Am besten mit Hinweis, wo die Kugel liegt
   - `{rest}` wird durch die Zahl der stehenden Pins ersetzt („zwei“, „drei“ …). Nur dort verwenden, wo mindestens zwei Pins stehen, sonst entsteht „einer sind …“.
   - Strike- und Spare-Sprüche nicht mit „Strike!“ oder „Spare!“ beginnen, der Titel steht schon gross im Stern.
   - Schweizer Schreibweise: „ss“ statt „ß“.

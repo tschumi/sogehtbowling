@@ -70,6 +70,14 @@ function comicTitle(kind,word,txt){
 }
 function comicBubble(title,txt){HGComics.bubble(overlay,title,txt)}
 function showToast(a,b){toast.firstChild.textContent=a;toast.lastChild.textContent=b;toast.classList.add('on')}
+/* Hinweisband, das nach HINT_MS von selbst verschwindet; ein Klick schliesst es vorher */
+const HINT_MS=3500;
+let hintTimer=0;
+function hintToast(a,b){
+ showToast(a,b);clearTimeout(hintTimer);
+ hintTimer=setTimeout(()=>{hintTimer=0;if(state===READY)toast.classList.remove('on')},HINT_MS);
+}
+function hintClose(){clearTimeout(hintTimer);hintTimer=0;toast.classList.remove('on')}
 
 /* ========== Pinsetter ==========
    Der Tisch fährt herunter, hebt stehende Pins an, der Rechen räumt gefallene Pins ab,
@@ -643,8 +651,9 @@ canvas.addEventListener('pointerdown',e=>{
   /* Kugel holen und platzieren */
   if(inRack(p)){grabbed={x:p.x,y:p.y,sx:p.x,sy:p.y,moved:false};return}
   if(ret.phase!=='held'&&ret.phase!=='pick'&&ret.phase!=='drop'){
-   showToast('Kugel','Zuerst die Kugel aus dem Rücklauf rechts holen.');
-   setTimeout(()=>{if(state===READY)toast.classList.remove('on')},1800);
+   /* steht der Hinweis noch: Klick schliesst ihn nur, statt den nächsten Spruch zu zeigen */
+   if(hintTimer){hintClose();return}
+   hintToast('Kugel',say('keinekugel')||'Zuerst die Kugel aus dem Rücklauf rechts holen.');
    return;
   }
   if(onBall(p)){

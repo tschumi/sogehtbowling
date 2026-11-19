@@ -72,7 +72,7 @@
  }
 
  for(const key of R.KEYS){
-  const g=S[key];if(!g)continue;
+  const g=S[key];if(!g||key==='keinekugel')continue; /* erscheint als Hinweisband, nicht in der Sprechblase */
   const grid=section(key,key==='strike'?'Strike-Stern':key==='spare'?'Spare-Stern':'Sprechblase');
   for(const tp of TEMPI)for(const txt of g[tp]||[]){
    const label=key+' · '+NAME[tp]+' · '+txt;

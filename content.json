@@ -370,6 +370,17 @@
       "schnell": [
         "Mit Wucht ins Ziel. Gutes Ende."
       ]
+    },
+    "keinekugel": {
+      "any": [
+        "Na, fehlt da nicht was? Die Kugel liegt rechts im Rücklauf.",
+        "Luftbowling zählt leider nicht. Zuerst die Kugel rechts holen.",
+        "Die Pins warten. Die Kugel auch, rechts im Rücklauf.",
+        "Mit blossen Händen? Respekt. Aber hol lieber die Kugel rechts.",
+        "Feenstaub allein wirft keine Pins um. Die Kugel liegt rechts.",
+        "Pantomime-Bowling ist erst nächstes Jahr olympisch. Kugel rechts holen.",
+        "Ohne Kugel wird das schwierig. Sie liegt rechts im Rücklauf."
+      ]
     }
   },
   "endwertung": [

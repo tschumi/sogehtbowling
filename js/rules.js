@@ -62,7 +62,8 @@ const ZAHL=['keiner','einer','zwei','drei','vier','fünf','sechs','sieben','acht
 /* Alle Spruchgruppen, die das Spiel verwenden kann */
 const KEYS=['strike','rinne1','luft1','wenig1','mittel1','mitte1','viel1','neun1',
  'spare','rinne2','luft2','knapp2','rest2gut','rest2mittel','rest2schwach',
- 'ende0','ende_wenig','ende_viel'];
+ 'ende0','ende_wenig','ende_viel',
+ 'keinekugel'];
 
 /* Welche Spruchgruppe passt?
    fresh = Wurf auf 10 stehende Pins, n = umgefallen, left = stehen noch, gut = Rinne,
