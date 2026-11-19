@@ -10,6 +10,8 @@
     python3 -m http.server 8000   →   http://localhost:8000/tests/vorschau.html
   Markierungen: rot = Text passt nicht in die Form, gelb = Schrift auf Mindestgrösse geschrumpft.
   Der automatische Test (tests/layout.test.js) liest das Ergebnis aus #ergebnis.
+  Am Ende die Bilder zum Teilen (js/share.js) mit festen Beispielspielen, auf einer einfachen Holzfläche statt der echten Bahn.
+  Die echte Bahn zeigt das Spiel selbst mit index.html?ende (siehe README).
 -->
 <link rel="stylesheet" href="../css/styles.css">
 <style>
@@ -29,6 +31,8 @@
  /* Animationen aus: immer den Endzustand zeigen */
  .pow svg,.pow svg *{animation:none!important;opacity:1!important}
  .pow svg{transform:translate(-50%,-50%) rotate(var(--r,0deg))!important}
+ .bild{width:300px;aspect-ratio:784/1416;display:block;background:#0b0e1c;object-fit:contain}
+ .versteckt{position:absolute;left:-3000px;top:0;width:360px;height:560px}
 </style>
 </head>
 <body>
@@ -37,6 +41,7 @@
 <div id="inhalt"></div>
 <script src="../js/rules.js"></script>
 <script src="../js/comics.js"></script>
+<script src="../js/share.js"></script>
 <script>
 (async()=>{
  const R=window.HGRules,C=window.HGComics,out=document.getElementById('inhalt'),res=document.getElementById('ergebnis');
@@ -87,6 +92,38 @@
   W.forEach((w,i)=>{const score=i+1<W.length?W[i+1].ab-1:300,txt=('Punkte! '+w.text).trim();
    tile(grid,'endwertung · ab '+w.ab+' · '+w.text,el=>C.title(el,'end',String(score),txt))});
  }
+ /* Rekord-Stern: mit dreistelliger Punktzahl und dreistelliger alter Bestmarke (breiteste Variante) */
+ const RK=content.rekord||[];
+ if(RK.length){
+  const grid=section('rekord','Abschluss-Stern bei neuem Rekord');
+  RK.forEach(t=>tile(grid,'rekord · '+t,el=>C.title(el,'rekord','288',('Punkte! '+t.replace('{bisher}','287')))));
+ }
+
+ /* Bilder zum Teilen: feste Beispielspiele (normal, neuer Rekord mit breitester Zahl, perfektes Spiel).
+    Bahn: Holzfläche mit dunklen Rändern wie die Kacheln oben, Stern und Bild mit dem gleichen Code wie im Spiel */
+ const BILDER=[
+  ['normales Spiel','end',[[7,2],[10],[8,2],[9,0],[10],[10],[7,3],[8,1],[6,4],[10,8,1]]],
+  ['neuer Rekord (bisher 287)','rekord',[[10],[10],[10],[10],[10],[10],[10],[10],[10],[10,10,8]],287],
+  ['perfektes Spiel','end',[[10],[10],[10],[10],[10],[10],[10],[10],[10],[10,10,10]]]
+ ];
+ const bahn=document.createElement('canvas');bahn.width=720;bahn.height=1120;
+ {const x=bahn.getContext('2d');x.scale(2,2);x.fillStyle='#12162a';x.fillRect(0,0,360,560);x.fillStyle='#d9a35a';x.fillRect(64,0,232,560)}
+ const versteckt=document.createElement('div');versteckt.className='pow versteckt';document.body.appendChild(versteckt);
+ const bgrid=section('teilen','Bild zum Teilen (Beispielspiele, vereinfachte Bahn)');
+ for(const [name,kind,frames,alt] of BILDER){
+  const t=document.createElement('div');t.className='tile';
+  t.innerHTML='<img class="bild" alt=""><div class="meta"><span class="flag"></span>'+esc(name)+'</div>';
+  bgrid.appendChild(t);
+  const score=R.total(frames),W=content.endwertung||[],RK=content.rekord||[];
+  const txt='Punkte! '+(alt!==undefined?(RK[0]||'').replace('{bisher}',alt):R.rating(W,score));
+  const star=C.title(versteckt,kind,String(score),txt.trim()).svg;
+  try{
+   const b=await HGShare.card({lane:bahn,w:360,h:560,star,frames,marks:R.marks,scores:R.scores,site:'sogehtbowling.ch'});
+   t.querySelector('img').src=URL.createObjectURL(b);n++;
+  }catch(e){t.classList.add('rot');t.querySelector('.flag').textContent='kein Bild';fehler.push('Teilen-Bild: '+name)}
+  star.remove();
+ }
+ versteckt.remove();
 
  const status=fehler.length?'rot':warn.length?'gelb':'ok';
  res.className=status;res.dataset.status=status;

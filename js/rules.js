@@ -103,5 +103,12 @@ function createSay(getSprueche,rand=Math.random){
 /* Bewertung am Spielende: höchster Eintrag mit ab <= score */
 function rating(list,score){const w=(list||[]).filter(x=>score>=x.ab).pop();return w?w.text:''}
 
-return {marks,scores,total,nextStep,ZAHL,KEYS,spruchKey,tempo,createSay,rating};
+/* Persönliche Bestmarke: alt = bisherige (null beim ersten Spiel), score = Ergebnis.
+   Ein neuer Rekord braucht eine Bestmarke, die übertroffen wird; das erste Spiel setzt sie nur. */
+function bestmarke(alt,score){
+ const a=Number.isFinite(alt)?alt:null;
+ return {neu:a!==null&&score>a,best:a===null?score:Math.max(a,score)};
+}
+
+return {marks,scores,total,nextStep,ZAHL,KEYS,spruchKey,tempo,createSay,rating,bestmarke};
 });

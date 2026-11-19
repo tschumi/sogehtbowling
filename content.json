@@ -239,7 +239,7 @@
       ],
       "sanft": [
         "Sanft und trotzdem fast alles. Nur noch {rest} übrig.",
-        "Solid aber zum Einschlafen."        
+        "Solid aber zum Einschlafen."
       ]
     },
     "neun1": {
@@ -412,5 +412,12 @@
       "ab": 300,
       "text": "Perfektes Spiel. Mehr geht nicht."
     }
-  ]
+  ],
+  "rekord": [
+    "Neuer persönlicher Rekord! Bisher waren es {bisher}.",
+    "Persönliche Bestmarke geknackt. Die alte lag bei {bisher}.",
+    "So gut warst du hier noch nie. Alter Rekord: {bisher}.",
+    "Rekord! Die {bisher} von früher sind Geschichte."
+  ],
+  "teilen": "Schaffst du mehr?"
 }

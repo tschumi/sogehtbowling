@@ -1,4 +1,4 @@
-/* Hoppi Galoppi Solutions – Comic-Einblendungen (Sprechblase, Spare-/Strike-/Abschluss-Stern)
+/* Hoppi Galoppi Solutions – Comic-Einblendungen (Sprechblase, Spare-/Strike-/Abschluss-/Rekord-Stern)
    Wird vom Spiel (game.js) und von der Vorschau (tests/vorschau.html) verwendet: window.HGComics.
    Beide Funktionen hängen ein SVG an `el` und geben {svg, fit, geo} zurück;
    fit.fallback = Text passt nicht in die Form, fit.sz = gewählte Schriftgrösse, geo.min = kleinste erlaubte.
@@ -27,7 +27,11 @@ const KINDS={
   stars:0,scale:90,word:'#ff7a1a',titleSize:60,text:{CX:200,CY:150,RX:142,RY:98,max:28,min:19}},
  /* Abschluss: Punktzahl als Titel, oben fest platziert, der Text darunter im Band */
  end:{ring:[186,146,22,.87,.91,1,1.09],fill:'#f7f2e6',dot:'#ffb36b',lines:22,lineW:3.2,lineFill:'#ff7a1a',
-  stars:7,scale:96,word:'#ff7a1a',titleSize:78,text:{CX:200,CY:160,RX:150,RY:100,max:28,min:19,band:[136,258]}}
+  stars:7,scale:96,word:'#ff7a1a',titleSize:78,text:{CX:200,CY:160,RX:150,RY:100,max:28,min:19,band:[136,258]}},
+ /* Abschluss mit neuem persönlichem Rekord: gleiche Form, aber golden und mit mehr Sternen.
+    Text etwas tiefer, die Rekord-Sprüche sind länger und würden sonst die Zahl berühren */
+ rekord:{ring:[186,146,22,.87,.91,1,1.09],fill:'#ffd23f',dot:'#ff9a2e',lines:22,lineW:3.2,lineFill:'#f7f2e6',
+  stars:12,scale:96,word:'#ff7a1a',titleSize:78,text:{CX:200,CY:166,RX:150,RY:100,max:28,min:19,band:[146,262]}}
 };
 
 /* Sprechblase: Koordinaten im SVG mit 200 × 170 */
@@ -63,9 +67,9 @@ function mount(el,viewBox,cls,css,content){
 }
 
 /* ---------- Stern (Strike, Spare, Abschluss) ----------
-   kind: 'spare' | 'strike' | 'end' (Abschluss-Stern mit Punktzahl als Titel), word: grosser Titel, txt: Spruch */
+   kind: 'spare' | 'strike' | 'end' | 'rekord' (Abschluss-Stern mit Punktzahl als Titel), word: grosser Titel, txt: Spruch */
 function title(el,kind,word,txt){
- const spare=kind==='spare',end=kind==='end',K=KINDS[kind]||KINDS.strike;
+ const K=KINDS[kind]||KINDS.strike,spare=kind==='spare',end=!!K.text.band;
  const cx=200,cy=150,id='t'+(++uid);
  let o='';
 

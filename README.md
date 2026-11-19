@@ -10,7 +10,8 @@ content.json      Alle Inhalte, die sich ändern: Team, Turnier, Geschichte, Spr
 css/styles.css    Gestaltung (Farben, Schriften, Layout, Animationen)
 js/site.js        Lädt content.json, Countdown, Intro, Navigation
 js/rules.js       Spielregeln ohne Grafik: offizielle Zählung, Frame-Ablauf, Spruchauswahl
-js/comics.js      Comic-Einblendungen: Sprechblase, Spare-, Strike- und Abschluss-Stern
+js/comics.js      Comic-Einblendungen: Sprechblase, Spare-, Strike-, Abschluss- und Rekord-Stern
+js/share.js       Bild zum Teilen am Spielende (Spieltafel, Bahn mit Stern, Adresse)
 js/physics.js     Physik ohne Grafik: Kugel, Pins, Zusammenstösse, Einstellungen
 js/game.js        Das Bowling-Spiel: Ablauf eines Wurfs, Pinsetter, Zeichnen, Eingabe
 assets/logo.svg   Logo inkl. funkelndem Feenstaub
@@ -40,6 +41,8 @@ Fast alles, was sich ändert, steht in **`content.json`**. HTML oder JavaScript 
   - Strike- und Spare-Sprüche nicht mit „Strike!“ oder „Spare!“ beginnen, der Titel steht schon gross im Stern.
   - Schweizer Schreibweise: „ss“ statt „ß“.
 - **Bewertung am Spielende:** Unter `endwertung` eine Liste mit Punktgrenze und Text, z.B. `{"ab": 150, "text": "Starkes Spiel."}`. Es gilt der höchste Eintrag, dessen `ab` erreicht ist. Die Liste beginnt bei 0 und ist aufsteigend.
+- **Neuer Rekord:** Der Browser merkt sich die persönliche Bestmarke (`localStorage`, Eintrag `hg-bestmarke`, nirgends angezeigt). Wird sie übertroffen, erscheint statt der Bewertung ein goldener Stern mit einem Text aus `rekord` (Liste, Platzhalter `{bisher}` = alte Bestmarke). Das erste Spiel setzt die Bestmarke nur, ein Rekord ist es noch nicht.
+- **Teilen:** Am Spielende erscheint auf der Bahn ein Knopf „Teilen“. Er teilt ein Bild (Spieltafel, Bahn mit Abschluss-Stern, Adresse; erzeugt in `js/share.js`) zusammen mit einem Text über das Teilen-Menü des Geräts. Ohne Teilen-Menü kommt das Bild in die Zwischenablage, sonst wird es heruntergeladen. Der Text dazu steht unter `teilen` (z.B. „Schaffst du mehr?“), der Link wird automatisch angehängt. Punkte und Rekord stehen schon im Bild; wer sie trotzdem im Text will, kann `{punkte}` verwenden. Der Link kommt aus `og:url` in `index.html`.
 
 Wichtig beim Bearbeiten: Texte in `"Anführungszeichen"`, Kommas zwischen Einträgen, kein Komma nach dem letzten Eintrag. Wer unsicher ist, prüft die Datei kurz auf [jsonlint.com](https://jsonlint.com).
 
@@ -69,7 +72,9 @@ python3 -m http.server 8000
 
 und `http://localhost:8000` öffnen.
 
-**Vorschau aller Sprüche:** `http://localhost:8000/tests/vorschau.html` zeigt jeden Spruch aus `content.json` in seiner echten Einblendung. Rot markiert = Text passt nicht in die Form, gelb = Schrift musste auf die Mindestgrösse schrumpfen. Praktisch nach dem Bearbeiten der Sprüche.
+**Vorschau aller Sprüche:** `http://localhost:8000/tests/vorschau.html` zeigt jeden Spruch aus `content.json` in seiner echten Einblendung. Rot markiert = Text passt nicht in die Form, gelb = Schrift musste auf die Mindestgrösse schrumpfen. Praktisch nach dem Bearbeiten der Sprüche. Ganz unten stehen die Bilder zum Teilen mit festen Beispielspielen (normal, neuer Rekord, perfektes Spiel) auf einer vereinfachten Bahn; fehlt eines, ist die Kachel rot. Mit der echten Bahn zeigt sie das Spiel über die Abkürzung `?ende` (siehe unten).
+
+**Direkt ans Spielende:** `http://localhost:8000/?ende` springt mit einem zufälligen Spiel ans Ende und zeigt Abschluss-Stern und Teilen-Knopf, ohne zehn Frames zu spielen. `?ende=rekord` zeigt den goldenen Rekord-Stern, `?ende=300` das perfekte Spiel. Wirkt nur lokal (`localhost`, `0.0.0.0`, `[::]`, `*.local` und Adressen im eigenen Netz, also auch auf dem Handy über die IP des Rechners), die gespeicherte Bestmarke bleibt unberührt.
 
 ## Tests
 
@@ -79,9 +84,9 @@ Die Tests brauchen nur [Node.js](https://nodejs.org) (ab Version 18), keine Zusa
 node --test
 ```
 
-- `tests/rules.test.js`: Zählung (ganze Spiele inkl. 300 und Sonderfälle im 10. Frame), Frame-Ablauf, Wahl der Spruchgruppe, Spruchauswahl, Bewertung
+- `tests/rules.test.js`: Zählung (ganze Spiele inkl. 300 und Sonderfälle im 10. Frame), Frame-Ablauf, Wahl der Spruchgruppe, Spruchauswahl, Bewertung, Bestmarke
 - `tests/physics.test.js`: Aufstellung, Rinnenwurf, gleicher Zufall ergibt gleichen Wurf, und eine Simulation der Spielbarkeit (Strike-Quote in der Tasche zwischen 25 und 55 %, Tasche besser als die Mitte)
-- `tests/content.test.js`: prüft `content.json` auf typische Bearbeitungsfehler (fehlende oder falsch geschriebene Gruppen, leere oder doppelte Sprüche, `{rest}` an falscher Stelle, „Strike!“ am Anfang, „ß“, Lücken in `endwertung`). Die Meldungen nennen Gruppe und Spruch.
+- `tests/content.test.js`: prüft `content.json` auf typische Bearbeitungsfehler (fehlende oder falsch geschriebene Gruppen, leere oder doppelte Sprüche, `{rest}` an falscher Stelle, „Strike!“ am Anfang, „ß“, Lücken in `endwertung`, Platzhalter in `rekord` und `teilen`). Die Meldungen nennen Gruppe und Spruch.
 - `tests/csp.test.js`: prüft die Sicherheitsregeln (Content-Security-Policy) in `index.html`. Wer das kleine Skript im Kopf von `index.html` ändert, muss dessen Hash in der CSP nachführen; der Test nennt den neuen Wert.
 - `tests/layout.test.js`: öffnet die Vorschau in Chrome im Hintergrund und schlägt fehl, wenn ein Spruch nicht in seine Einblendung passt. Speichert dabei ein Bild aller Einblendungen unter `tests/vorschau.png` (nicht im Repository). Ohne Chrome wird dieser Test übersprungen, ein anderer Pfad geht mit `CHROME_PATH=/pfad/zu/chrome node --test`.
 

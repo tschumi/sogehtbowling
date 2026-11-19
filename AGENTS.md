@@ -13,12 +13,13 @@ Website des Fun-Bowlingteams **Hoppi Galoppi Solutions** (sogehtbowling.ch) mit 
 
 | Datei | Inhalt |
 |---|---|
-| `index.html` | Seitengerüst, lädt die Skripte in dieser Reihenfolge (alle `defer`): `site.js`, `rules.js`, `comics.js`, `physics.js`, `game.js` |
-| `content.json` | Alle redaktionellen Inhalte (Team, Turnier, Geschichte, Sprüche, Endwertung) |
+| `index.html` | Seitengerüst, lädt die Skripte in dieser Reihenfolge (alle `defer`): `site.js`, `rules.js`, `comics.js`, `share.js`, `physics.js`, `game.js` |
+| `content.json` | Alle redaktionellen Inhalte (Team, Turnier, Geschichte, Sprüche, Endwertung, Rekord- und Teilen-Texte) |
 | `css/styles.css` | Gestaltung, Layout, Animationen |
 | `js/site.js` | Lädt `content.json` (als `window.HG_CONTENT`), Countdown, Intro, Navigation, Burger-Menü |
 | `js/rules.js` | `HGRules`: Zählung, Frame-Ablauf, Spruchauswahl. Ohne DOM, in Node testbar |
-| `js/comics.js` | `HGComics`: Comic-Einblendungen (Strike, Spare, Sprechblase, Abschluss-Stern) |
+| `js/comics.js` | `HGComics`: Comic-Einblendungen (Strike, Spare, Sprechblase, Abschluss- und Rekord-Stern) |
+| `js/share.js` | `HGShare`: Bild zum Teilen am Spielende (Tafel, Bahn mit Stern, Adresse). Bettet die Schriften ins Stern-SVG ein |
 | `js/physics.js` | `HGPhysics`: Kugel, Pins, Zusammenstösse und der Block `TUNING`. Ohne DOM, in Node testbar |
 | `js/game.js` | Ablauf eines Wurfs, Pinsetter, Kugelrücklauf, Bahnlogo, Zeichnen auf dem Canvas, Eingabe, Spielanleitung (Info-Knopf) |
 | `tests/` | `node --test`-Tests und `vorschau.html` (Vorschau aller Sprüche) |
@@ -26,7 +27,7 @@ Website des Fun-Bowlingteams **Hoppi Galoppi Solutions** (sogehtbowling.ch) mit 
 
 `rules.js`, `comics.js` und `physics.js` sind UMD-Module: im Browser globale Objekte, in Node per `require`.
 
-`game.js` ist in Abschnitte mit `/* ========== … ========== */` gegliedert: Einstellungen, Spielzustand, Partikel, Einblendungen, Pinsetter, Ablauf, Zeichnen (inkl. Bahnlogo), Kugelrücklauf, Hauptschleife, Eingabe, Start.
+`game.js` ist in Abschnitte mit `/* ========== … ========== */` gegliedert: Einstellungen, Spielzustand, Partikel, Einblendungen, Pinsetter, Ablauf, Spielende (Bestmarke, Teilen), Zeichnen (inkl. Bahnlogo), Kugelrücklauf, Hauptschleife, Eingabe, Start.
 
 ### Spielablauf in Kürze
 
@@ -43,6 +44,8 @@ node --test                   # alle Tests (Node ab 18, keine Pakete)
 ```
 
 - Die Spielanleitung öffnet sich beim ersten Besuch einmal von selbst. Zum erneuten Testen den Eintrag `hg-anleitung` im `localStorage` löschen oder ein privates Fenster nutzen.
+- Die persönliche Bestmarke steht im `localStorage` unter `hg-bestmarke`. Rekord-Stern testen: Wert tief setzen (z.B. `localStorage.setItem('hg-bestmarke','1')`) und ein Spiel fertig spielen.
+- Abkürzung ans Spielende (nur lokal: `localhost`, `0.0.0.0`, `[::]`, `*.local`, eigenes Netz): `http://localhost:8000/?ende` (Zufallsspiel), `?ende=rekord`, `?ende=300`. Zeigt Abschluss-Stern und Teilen-Knopf. Die Bestmarke bleibt unberührt.
 - `tests/layout.test.js` braucht Chrome (Pfad über `CHROME_PATH`), sonst wird er übersprungen.
 - Nach jeder Änderung `node --test` laufen lassen und das Ergebnis ehrlich melden.
 

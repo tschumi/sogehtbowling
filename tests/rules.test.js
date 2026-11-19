@@ -207,3 +207,20 @@ describe('Bewertung am Spielende',()=>{
   assert.equal(R.rating([],150),'');
  });
 });
+
+describe('Persönliche Bestmarke',()=>{
+ test('erstes Spiel setzt die Bestmarke, ist aber kein Rekord',()=>{
+  assert.deepEqual(R.bestmarke(null,87),{neu:false,best:87});
+  assert.deepEqual(R.bestmarke(undefined,0),{neu:false,best:0});
+ });
+ test('höher ist ein neuer Rekord',()=>{
+  assert.deepEqual(R.bestmarke(120,121),{neu:true,best:121});
+ });
+ test('gleich oder tiefer ist kein Rekord, die Bestmarke bleibt',()=>{
+  assert.deepEqual(R.bestmarke(120,120),{neu:false,best:120});
+  assert.deepEqual(R.bestmarke(120,40),{neu:false,best:120});
+ });
+ test('kaputter Wert im Speicher zählt wie kein Wert',()=>{
+  assert.deepEqual(R.bestmarke(NaN,50),{neu:false,best:50});
+ });
+});

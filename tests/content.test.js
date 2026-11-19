@@ -93,6 +93,24 @@ describe('Bewertung am Spielende',()=>{
  });
 });
 
+describe('Neuer Rekord und Teilen',()=>{
+ test('"rekord" ist eine Liste mit Texten, nur Platzhalter {bisher}, kein ß',()=>{
+  const L=content.rekord;
+  assert.ok(Array.isArray(L)&&L.length>0,'"rekord" fehlt oder ist leer');
+  for(const s of L){
+   assert.ok(typeof s==='string'&&s.trim()!=='',`leerer Text in "rekord"`);
+   for(const p of s.match(/\{[^}]*\}/g)||[])assert.equal(p,'{bisher}',`"rekord": unbekannter Platzhalter ${p}`);
+   assert.doesNotMatch(s,/ß/,`"rekord": "${s}"`);
+  }
+ });
+ test('"teilen" ist ein Text, höchstens Platzhalter {punkte}, kein ß',()=>{
+  const T=content.teilen;
+  assert.ok(typeof T==='string'&&T.trim()!=='','"teilen" fehlt oder ist kein Text');
+  for(const p of T.match(/\{[^}]*\}/g)||[])assert.equal(p,'{punkte}',`"teilen": unbekannter Platzhalter ${p}`);
+  assert.doesNotMatch(T,/ß/,'"teilen"');
+ });
+});
+
 describe('Team',()=>{
  test('Kugelfarben sind drei Hex-Farben (sonst nimmt die Seite die Standardfarben)',()=>{
   for(const m of content.team||[])if(m.kugel!==undefined){

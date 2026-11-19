@@ -10,14 +10,14 @@
 /* ========== Grundlagen ========== */
 
 const P=window.HGPhysics,TUNING=P.TUNING,{W,H,MID,SPOTS,HEAD_Y}=P;
-const {marks,scores,total,nextStep,spruchKey,createSay,rating}=window.HGRules;
+const {marks,scores,total,nextStep,spruchKey,createSay,rating,bestmarke}=window.HGRules;
 
 const canvas=document.getElementById('lane'),ctx=canvas.getContext('2d');
 const dpr=Math.min(window.devicePixelRatio||1,2);
 canvas.width=W*dpr;canvas.height=H*dpr;ctx.scale(dpr,dpr);
 
 const $=id=>document.getElementById(id);
-const toast=$('toast'),overlay=$('pow'),laneWrap=document.querySelector('.lw');
+const toast=$('toast'),overlay=$('pow'),laneWrap=document.querySelector('.lw'),shareBtn=$('share');
 const R=(a,b)=>a+Math.random()*(b-a);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -78,11 +78,18 @@ const LANE_LOGO={
 
 const MAX_PARTICLES=400;            // Obergrenze für Funken und Feenstaub
 
-/* Sprüche und Bewertung kommen aus content.json (geladen von site.js) */
-let sprueche={},wertung=[];
+/* Bestmarke und Teilen am Spielende */
+const BEST_KEY='hg-bestmarke';      // Eintrag im localStorage mit der persönlichen Bestmarke (nur in diesem Browser)
+const RECORD_SPARKS=6,RECORD_SPARK_N=28,RECORD_SPARK_MS=220; // neuer Rekord: so viele Funkenregen, je so viele Funken, im Abstand von
+const SHARE_DONE_MS=2200;           // so lange steht „Bild kopiert!“ o.ä. auf dem Teilen-Knopf, wenn das Gerät kein Teilen-Menü hat
+
+/* Sprüche, Bewertung, Rekord- und Teilen-Texte kommen aus content.json (geladen von site.js) */
+let sprueche={},wertung=[],rekordTexte=[],teilen='';
 (window.HG_CONTENT||Promise.resolve({})).then(c=>{
  if(c&&c.sprueche)sprueche=c.sprueche;
  if(c&&Array.isArray(c.endwertung))wertung=c.endwertung;
+ if(c&&Array.isArray(c.rekord))rekordTexte=c.rekord;
+ if(c&&typeof c.teilen==='string')teilen=c.teilen;
 }).catch(()=>{});
 const say=createSay(()=>sprueche);
 
@@ -100,6 +107,7 @@ let settle=0;          // Schritte, in denen sich nichts mehr bewegt hat
 let lastV=9;           // Tempo des letzten Wurfs (für Tempo-Sprüche)
 let tick=0;            // Schrittzähler (für das Wackeln der Pins)
 let frames=[],frameNo=1,ballInFrame=1,gameOver=false,finalScore=0;
+let rekordAlt=null;    // bisherige Bestmarke, wenn dieses Spiel sie übertroffen hat, sonst null
 let msgOpen=false,msgTimer=0;
 
 /* ========== Partikel (nur Grafik) ========== */
@@ -122,8 +130,9 @@ function hideOverlays(){
 }
 /* Comic-Stern (Strike, Spare, Abschluss) mit kurzem Wackeln der Bahn */
 function comicTitle(kind,word,txt){
- HGComics.title(overlay,kind,word,txt);
+ const r=HGComics.title(overlay,kind,word,txt);
  laneWrap.classList.remove('shake');void laneWrap.offsetWidth;laneWrap.classList.add('shake');
+ return r;
 }
 /* Hinweisband, das nach HINT_MS von selbst verschwindet */
 let hintTimer=0;
@@ -191,7 +200,8 @@ function runPinsetter(){
 
 function newGame(){
  frames=Array.from({length:10},()=>[]);
- frameNo=1;ballInFrame=1;gameOver=false;
+ frameNo=1;ballInFrame=1;gameOver=false;rekordAlt=null;shareImg=null;
+ shareBtn.hidden=true;
  renderSheet();
 }
 
@@ -221,7 +231,7 @@ function scoreThrow(){
  else HGComics.bubble(overlay,(lane.gutter&&n===0)?'RINNE!':all+' von 10',t);
  const [ms,perChar]=strike||spare?MSG_MS.big:MSG_MS.bubble;
  clearTimeout(msgTimer);msgTimer=setTimeout(dismiss,ms+t.length*perChar);
- if(next==='end'){gameOver=true;finalScore=renderSheet()}
+ if(next==='end'){gameOver=true;finalScore=renderSheet();rekordAlt=saveBest(finalScore)}
  else renderSheet();
 
  const startReset=()=>{
@@ -249,7 +259,7 @@ function step(){
     (in der Mulde oder schon vom Spieler geholt) */
  if(state===SHOWING&&!reset&&!msgOpen&&(ret.phase==='rack'||ballPlaced())){
   state=READY;
-  if(gameOver)comicTitle('end',String(finalScore),('Punkte! '+rating(wertung,finalScore)).trim());
+  if(gameOver)showEnd();
  }
  tick++;
  moveReturn();
@@ -260,6 +270,65 @@ function step(){
   if(settle>SETTLE_STEPS)scoreThrow();
  }
 }
+
+/* ========== Spielende: Bestmarke, Abschluss-Stern, Teilen ========== */
+
+/* Bestmarke im Browser nachführen; gibt die alte zurück, wenn sie übertroffen wurde, sonst null.
+   Ohne localStorage (privates Fenster, gesperrt) gibt es einfach keine Rekorde. */
+function saveBest(score){
+ let alt=null;
+ try{const v=localStorage.getItem(BEST_KEY);if(v!==null)alt=parseInt(v,10)}catch(_){}
+ const r=bestmarke(alt,score);
+ try{localStorage.setItem(BEST_KEY,String(r.best))}catch(_){}
+ return r.neu?alt:null;
+}
+
+/* Abschluss-Stern, bei neuem Rekord golden mit Funkenregen; dazu der Teilen-Knopf.
+   Das Bild zum Teilen wird gleich jetzt erzeugt: Safari erlaubt das Teilen nur direkt nach dem Klick. */
+let shareImg=null;     // Promise mit dem PNG (Blob) des aktuellen Spielendes
+function showEnd(){
+ const s=String(finalScore);let c;
+ if(rekordAlt!==null){
+  const t=rekordTexte.length?rekordTexte[Math.floor(Math.random()*rekordTexte.length)]:'Neuer persönlicher Rekord!';
+  c=comicTitle('rekord',s,'Punkte! '+t.replace('{bisher}',rekordAlt));
+  if(!REDUCED)for(let i=0;i<RECORD_SPARKS;i++)setTimeout(()=>burst(R(90,270),R(110,450),RECORD_SPARK_N),i*RECORD_SPARK_MS);
+ }
+ else c=comicTitle('end',s,('Punkte! '+rating(wertung,finalScore)).trim());
+ shareImg=window.HGShare?HGShare.card({lane:canvas,w:W,h:H,star:c&&c.svg,frames,marks,scores,
+  site:siteUrl().replace(/^https?:\/\/|\/$/g,'')}).catch(()=>null):Promise.resolve(null);
+ shareBtn.textContent='Teilen';shareBtn.hidden=false;
+}
+
+const siteUrl=()=>(document.querySelector('meta[property="og:url"]')||{}).content||location.href;
+
+/* Ergebnis teilen: Bild und Text (kurzer Satz aus content.json und Link; Punkte und Rekord stehen im Bild)
+   über das Teilen-Menü des Geräts. Ohne Teilen-Menü für Bilder:
+   Bild in die Zwischenablage, sonst herunterladen. Ganz ohne Bild: nur Text und Link. */
+let shareTimer=0;
+function shareDone(t){
+ shareBtn.textContent=t;clearTimeout(shareTimer);
+ shareTimer=setTimeout(()=>{shareBtn.textContent='Teilen'},SHARE_DONE_MS);
+}
+async function share(){
+ const url=siteUrl(),score=finalScore;
+ const text=((teilen||'Schaffst du mehr?').replace('{punkte}',score)+' '+url).trim();
+ const blob=await shareImg,file=blob&&new File([blob],'hoppi-galoppi-'+score+'.png',{type:'image/png'});
+ if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+  try{await navigator.share({files:[file],text})}catch(_){} /* abgebrochen: nichts tun */
+  return;
+ }
+ if(blob&&navigator.clipboard&&navigator.clipboard.write&&window.ClipboardItem){
+  try{await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);shareDone('Bild kopiert!');return}catch(_){}
+ }
+ if(blob){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  shareDone('Bild gespeichert');return;
+ }
+ if(navigator.share){try{await navigator.share({text})}catch(_){}return}
+ try{await navigator.clipboard.writeText(text);shareDone('Kopiert!')}catch(_){hint('Teilen',text)}
+}
+shareBtn.addEventListener('click',share);
 
 /* ========== Anzeige: Spielstand und Wurf-Punkte ========== */
 
@@ -719,4 +788,30 @@ laneWrap.addEventListener('pointerdown',dismiss);
 lane.rack();
 newGame();
 requestAnimationFrame(loop);
+
+/* ========== Nur lokal: direkt ans Spielende ==========
+   Zum Ausprobieren von Abschluss-Stern und Teilen-Bild, ohne zehn Frames zu spielen (nur lokal: localhost,
+   0.0.0.0 bzw. [::] wie von python3 -m http.server angezeigt, *.local und Adressen im eigenen Netz, z.B. fürs Handy):
+   index.html?ende = zufälliges Spiel, ?ende=rekord = mit neuem Rekord, ?ende=300 = perfektes Spiel.
+   Die gespeicherte Bestmarke bleibt unberührt. */
+const LOCAL=/^(localhost|0\.0\.0\.0|\[::1?\]|127\.\d+\.\d+\.\d+|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|.+\.local)$/;
+const TEST=LOCAL.test(location.hostname)&&new URLSearchParams(location.search).get('ende');
+const TEST_WAIT_MS=800;             // erst Inhalte, Schriften und Bahnlogo laden lassen
+if(typeof TEST==="string"){
+ /* Zufallsspiel, Würfe eher hoch (mehr Strikes und Spares als beim reinen Zufall) */
+ const r=n=>TEST==='300'?n:Math.round(n*Math.sqrt(Math.random()));
+ const testGame=()=>{
+  const fr=[];
+  for(let f=0;f<9;f++){const a=r(10);fr.push(a===10?[10]:[a,r(10-a)])}
+  const a=r(10),b=r(a===10?10:10-a),t=[a,b];
+  if(a===10||a+b===10)t.push(r(a===10&&b<10?10-b:10));
+  fr.push(t);return fr;
+ };
+ (window.HG_CONTENT||Promise.resolve()).catch(()=>{}).then(()=>setTimeout(()=>{
+  frames=testGame();frameNo=10;gameOver=true;finalScore=renderSheet();
+  rekordAlt=TEST==='rekord'?Math.max(0,finalScore-1-Math.floor(Math.random()*30)):null;
+  canvas.scrollIntoView({block:'center'});
+  draw();showEnd();
+ },TEST_WAIT_MS));
+}
 })();
