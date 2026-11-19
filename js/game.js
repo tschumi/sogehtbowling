@@ -547,8 +547,9 @@ const powerFill=$('pf'),powerValue=$('pv');
 /* Im Balken: beim Ziehen das Tempo. Ob geworfen werden kann, zeigt die Kugel (zurück aus dem Rücklauf). */
 let meterText='';
 const updateMeter=()=>{
+ /* km/h erst, wenn wirklich aufgezogen wird (wie beim Loslassen: genug weit nach vorne) */
  const p=pushLevel();
- const text=push?Math.round((5+8*p)*2.8)+' km/h':'';
+ const text=p?Math.round((5+8*p)*2.8)+' km/h':'';
  powerFill.style.width=p*100+'%';
  if(text!==meterText)powerValue.textContent=meterText=text;
 };
