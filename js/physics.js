@@ -40,7 +40,9 @@ const TUNING={
  pushLen:110,        // so weit ziehen (Bahn-Einheiten, Bahn = 560 hoch) für volle Wucht
  pushAim:.6,         // Zugrichtung → Ziel: 1 = Kugel läuft exakt in Zugrichtung, kleiner = gröber/verzeihender
  pushWobble:14,      // Zittern des Ziels bei voller Wucht (bei wenig Wucht kaum)
- pushMin:12          // kürzerer Zug gilt als abgebrochen
+ pushMin:12,         // kürzerer Zug gilt als abgebrochen
+ speedMin:5,         // Tempo der Kugel bei wenig Wucht (Bahn-Einheiten pro Schritt) …
+ speedMax:13         // … und bei voller Wucht. Ab 11.5 kommen „schnelle“ Sprüche, unter 6.5 „sanfte“ (rules.js)
 };
 
 /* Feste Masse der Bahn */
@@ -84,7 +86,7 @@ function createLane({rand=()=>Math.random(),fx={}}={}){
   p.vx+=ix;p.vy+=iy;p.vr+=ir;
  }
 
- /* Kugel losschicken: tx = Ziel-x auf Höhe der Pins, v = Tempo (5 bis 13), sx = Start-x (Standard Mitte) */
+ /* Kugel losschicken: tx = Ziel-x auf Höhe der Pins, v = Tempo (speedMin bis speedMax), sx = Start-x (Standard Mitte) */
  lane.launch=function(tx,v,sx=MID){
   lane.gutter=false;lane.carry=1;
   lane.pins.forEach(p=>{p.bh=false});

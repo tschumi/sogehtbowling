@@ -19,6 +19,64 @@ canvas.width=W*dpr;canvas.height=H*dpr;ctx.scale(dpr,dpr);
 const $=id=>document.getElementById(id);
 const toast=$('toast'),overlay=$('pow'),laneWrap=document.querySelector('.lw');
 const R=(a,b)=>a+Math.random()*(b-a);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+/* ========== Einstellungen ==========
+   Ablauf und Grafik. Das Spielgefühl (Schwierigkeit, Physik, Ziehen, Zittern) steht in TUNING in physics.js.
+   Zeiten in Millisekunden (…_MS), Dauern in Schritten (…_STEPS, 60 pro Sekunde), Lagen und Grössen in Bahn-Einheiten:
+   Bahn 360 × 560, Holz von x=64 bis 296, Mitte 180; in y: Kopfpin 168, Zielpfeile 308–364, Foul-Linie 482. */
+
+/* Kugel auf der Bahn und Eingabe */
+const BALL_Y=P.BALL_START_Y;        // y der Kugel vor dem Wurf
+const SPOT_MIN=84,SPOT_MAX=276;     // so weit lässt sie sich seitlich verschieben
+const GRAB=30;                      // Trefferzone um die Kugel und um die Mulde im Rücklauf
+const GRAB_MOVE=6;                  // ab so viel Bewegung wird die Kugel aus dem Rücklauf gezogen statt angeklickt
+const DOUBLE_TAP_MS=350;            // Doppeltipp auf die Kugel: zurück in die Mitte
+const TARGET_MIN=28,TARGET_MAX=332; // Ziel-x beim Wurf wird darauf begrenzt
+const KMH=2.8;                      // Umrechnung Tempo → km/h in der Anzeige
+
+/* Meldungen */
+const HINT_MS=3500;                 // Hinweisband ohne Kugel; ein Klick schliesst es vorher
+const MSG_MS={big:[4500,50],bubble:[2600,42]}; // Spruch nach dem Wurf (Stern bzw. Sprechblase): Grundzeit + pro Zeichen
+const RESET_DELAY_MS=900;           // so lange nach dem Spruch, bis der Pinsetter loslegt
+const SETTLE_STEPS=20;              // so lange muss alles ruhig sein, bevor der Wurf gezählt wird
+const HOWTO_DELAY_MS=6000;          // erster Besuch: Anleitung geht so lange nach dem Sichtbarwerden der Bahn auf
+
+/* Pinsetter */
+const TABLE_DOWN=44;                // Tisch unten: Pins abgesetzt
+const TABLE_UP=TABLE_DOWN-HEAD_Y-30;// Tisch oben: ganz ausserhalb des Bildes
+const TABLE_SPEED=2.2,RAKE_SPEED=6; // Tempo von Tisch und Rechen pro Schritt
+
+/* Kugelrücklauf rechts neben der Bahn */
+const RET_X=340,RET_HOOD_Y=432,RET_RACK_Y=528; // Mitte der Schiene, Haube, Mulde
+const UNDER_STEPS=REDUCED?40:50;    // unterirdisch unterwegs (mindestens)
+const ROLL_STEPS=REDUCED?1:55;      // von der Haube in die Mulde rollen
+const PICK_STEPS=REDUCED?1:18;      // gezogene Kugel gleitet an ihren Platz
+/* Kugel per Klick aus dem Rücklauf holen: anheben, rechts über die Bahn tragen und mit etwas Schwung
+   fallen lassen. Seitwärts wird sie ab dem Loslassen gleichmässig langsamer, bis sie an ihrem Platz steht;
+   dabei schlägt sie auf, hüpft zweimal nach (der erste Hüpfer trägt weiter) und rollt aus. */
+const DROP_X=270;                   // hier wird sie über der Bahn losgelassen
+const DROP={lift:12,fall:12,hop1:18,hop2:12,roll:48}; // Dauer der Abschnitte (Schritte); roll: Ausrollen nach dem zweiten Hüpfer
+const DROP_HOPS=[.5,.22];           // Höhe der zwei Nachhüpfer (1 = Fallhöhe)
+const DROP_SCALE=.45,DROP_SHADOW=10,DROP_RING=14; // Grösse in der Luft, Schattenversatz, Dauer eines Aufschlagrings
+const DROP_SHAKE=1.8;               // so stark wackelt der Boden beim ersten Aufschlag, bei den Hüpfern weniger
+
+/* Logo auf der Bahn, wie bei echten Bahnen unter der Oberfläche (oder beim Eishockey unter dem Eis).
+   Zwischen Zielpfeilen und Foul-Linie, ohne Claim, Feenstaub statisch. */
+const LANE_LOGO={
+ x:180,         // Mitte des Logos, waagrecht (kleiner = nach links)
+ bottom:456,    // Unterkante des Logos ohne Feenstaub (kleiner = weiter nach oben)
+ w:176,         // Breite des Logos (ohne Feenstaub), die Höhe passt sich an
+ alpha:.24,     // Deckkraft: wie stark das Logo durch den Lack scheint
+ dustAlpha:.00, // Deckkraft des Feenstaubs (weiss auf hellem Holz braucht mehr)
+ brown:true,    // true = in Brauntönen (wie eingelegt ins Holz), false = Originalfarben
+ diamond:false, // true = mit Raute, false = ohne
+ pins:true,     // true = mit Kugel und Pins, false = nur Schriftzug
+ dark:[160,110,58],light:[255,236,200] // Brauntöne: Helligkeit des Logos wird auf diese Skala abgebildet
+};
+
+const MAX_PARTICLES=400;            // Obergrenze für Funken und Feenstaub
 
 /* Sprüche und Bewertung kommen aus content.json (geladen von site.js) */
 let sprueche={},wertung=[];
@@ -50,7 +108,7 @@ function trail(x,y){
  for(let i=0;i<2;i++)particles.push({x:x+R(-5,5),y:y+10,vx:R(-.5,.5),vy:R(.3,1),l:.8,s:R(6,12),w:Math.random()<.5});
 }
 function burst(x,y,n){
- for(let i=0;i<n&&particles.length<400;i++)particles.push({x,y,vx:R(-2.2,2.2),vy:R(-2.2,2.2),l:1,s:R(8,16),w:Math.random()<.5});
+ for(let i=0;i<n&&particles.length<MAX_PARTICLES;i++)particles.push({x,y,vx:R(-2.2,2.2),vy:R(-2.2,2.2),l:1,s:R(8,16),w:Math.random()<.5});
 }
 function moveParticles(){
  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.l-=.025});
@@ -61,32 +119,27 @@ function moveParticles(){
 
 function hideOverlays(){
  overlay.querySelectorAll('svg').forEach(s=>{s.classList.add('out');setTimeout(()=>s.remove(),300)});
- toast.classList.remove('low');
 }
 /* Comic-Stern (Strike, Spare, Abschluss) mit kurzem Wackeln der Bahn */
 function comicTitle(kind,word,txt){
  HGComics.title(overlay,kind,word,txt);
  laneWrap.classList.remove('shake');void laneWrap.offsetWidth;laneWrap.classList.add('shake');
 }
-function comicBubble(title,txt){HGComics.bubble(overlay,title,txt)}
-function showToast(a,b){toast.firstChild.textContent=a;toast.lastChild.textContent=b;toast.classList.add('on')}
-/* Hinweisband, das nach HINT_MS von selbst verschwindet; ein Klick schliesst es vorher */
-const HINT_MS=3500;
+/* Hinweisband, das nach HINT_MS von selbst verschwindet */
 let hintTimer=0;
-function hintToast(a,b){
- showToast(a,b);clearTimeout(hintTimer);
- hintTimer=setTimeout(()=>{hintTimer=0;if(state===READY)toast.classList.remove('on')},HINT_MS);
+function hint(a,b){
+ toast.firstChild.textContent=a;toast.lastChild.textContent=b;toast.classList.add('on');
+ clearTimeout(hintTimer);hintTimer=setTimeout(clearToast,HINT_MS);
 }
-function hintClose(){clearTimeout(hintTimer);hintTimer=0;toast.classList.remove('on')}
+function clearToast(){clearTimeout(hintTimer);hintTimer=0;toast.classList.remove('on')}
+/* alles weg: Hinweisband und Comic-Einblendungen */
+function clearMessages(){clearToast();hideOverlays()}
 
 /* ========== Pinsetter ==========
    Der Tisch fährt herunter, hebt stehende Pins an, der Rechen räumt gefallene Pins ab,
    der Tisch setzt die Pins wieder ab (oder stellt zehn neue auf).
    Die Schritte stehen als Aufträge in einer Warteschlange und laufen nacheinander ab. */
 
-const TABLE_DOWN=44;                     // Tisch unten: Pins abgesetzt
-const TABLE_UP=TABLE_DOWN-HEAD_Y-30;     // Tisch oben: ganz ausserhalb des Bildes
-const TABLE_SPEED=2.2;
 const table={y:TABLE_UP};
 let rake=null;                           // Rechen, solange er läuft: {y, t}
 const jobs=[];
@@ -121,7 +174,7 @@ function moveTable(j){
 }
 function moveRake(j){
  if(!rake)rake={y:178,t:0};
- rake.t++;rake.y-=6;
+ rake.t++;rake.y-=RAKE_SPEED;
  lane.pins.forEach(p=>{if(p.d&&p.y>rake.y-4)p.y=rake.y-4});
  if(rake.y<-24){rake=null;j.then&&j.then();jobs.shift()}
 }
@@ -142,15 +195,13 @@ function newGame(){
  renderSheet();
 }
 
-/* Wurf starten: tx = Ziel-x, pwr = Tempo (5 bis 13), sx = Start-x */
-function throwBall(tx,pwr,sx=MID){
+/* Wurf starten: tx = Ziel-x, v = Tempo (TUNING.speedMin bis speedMax), von der Startposition spotX aus */
+function throwBall(tx,v){
  if(state!==READY)return;
  if(gameOver)newGame();
  state=ROLLING;settle=0;
- toast.classList.remove('on');hideOverlays();
- tx=Math.max(28,Math.min(332,tx));
- const v=lastV=pwr||9;
- lane.launch(tx,v,sx);
+ clearMessages();
+ lane.launch(tx,lastV=v,spotX);
  ret.phase='out';ret.due=false;
 }
 
@@ -167,9 +218,9 @@ function scoreThrow(){
  const key=spruchKey({fresh,n,left,gut:lane.gutter,mitte:pins.filter(p=>!p.d).every(p=>p.k<1),last:next==='end'});
  const t=say(key,left,lastV);
  if(spare||strike)comicTitle(spare?'spare':'strike',spare?'SPARE!':'STRIKE!',t);
- else comicBubble((lane.gutter&&n===0)?'RINNE!':all+' von 10',t);
- clearTimeout(msgTimer);
- msgTimer=setTimeout(dismiss,(strike||spare)?4500+t.length*50:2600+t.length*42);
+ else HGComics.bubble(overlay,(lane.gutter&&n===0)?'RINNE!':all+' von 10',t);
+ const [ms,perChar]=strike||spare?MSG_MS.big:MSG_MS.bubble;
+ clearTimeout(msgTimer);msgTimer=setTimeout(dismiss,ms+t.length*perChar);
  if(next==='end'){gameOver=true;finalScore=renderSheet()}
  else renderSheet();
 
@@ -181,14 +232,13 @@ function scoreThrow(){
   renderSheet();
  };
  state=SHOWING;msgOpen=true;reset=RESET_PENDING;
- setTimeout(startReset,900);
+ setTimeout(startReset,RESET_DELAY_MS);
 }
 
 /* Meldung schliessen (Tipp auf die Bahn oder nach Ablauf der Zeit) */
 const dismiss=()=>{
  if(state!==SHOWING||!msgOpen)return;
- toast.classList.remove('on','wait');hideOverlays();
- clearTimeout(msgTimer);msgOpen=false;
+ clearMessages();clearTimeout(msgTimer);msgOpen=false;
 };
 
 /* Ein Schritt (1/60 s): Pinsetter, Ablauf, Physik, Partikel */
@@ -197,7 +247,7 @@ function step(){
  if(reset===RESET_RUNNING&&!jobs.length)reset=RESET_NONE;
  /* bereit für den nächsten Wurf, wenn Pinsetter fertig, Meldung zu und die Kugel zurück
     (in der Mulde oder schon vom Spieler geholt) */
- if(state===SHOWING&&!reset&&!msgOpen&&['rack','pick','drop','held'].includes(ret.phase)){
+ if(state===SHOWING&&!reset&&!msgOpen&&(ret.phase==='rack'||ballPlaced())){
   state=READY;
   if(gameOver)comicTitle('end',String(finalScore),('Punkte! '+rating(wertung,finalScore)).trim());
  }
@@ -207,7 +257,7 @@ function step(){
  moveParticles();
  if(state===ROLLING&&!lane.ball){
   settle=lane.moving()?0:settle+1;
-  if(settle>20)scoreThrow();
+  if(settle>SETTLE_STEPS)scoreThrow();
  }
 }
 
@@ -231,23 +281,7 @@ const PZ=TUNING.pinScale,BR=TUNING.ballRadius;
 /* Die Pinsetter-Grafik wurde für Pin-Abstand 26 gezeichnet und wächst mit dem Abstand mit */
 const XS=x=>MID+(x-MID)*TUNING.pinSpacing/26;
 
-/* Logo auf der Bahn, wie bei echten Bahnen unter der Oberfläche (oder beim Eishockey unter dem Eis).
-   Zwischen Zielpfeilen und Foul-Linie, ohne Claim, Feenstaub statisch. Wird einmal vorgezeichnet,
-   danach kostet es pro Bild nur ein drawImage. */
-const LANE_LOGO={
- /* Lage auf der Bahn (Bahn-Einheiten, 360 × 560): Holz von x=64 bis 296, Mitte 180.
-    Zum Vergleich in y: Kopfpin 168, Zielpfeile 308–364, Foul-Linie 482, unterer Rand 560 */
- x:180,       // Mitte des Logos, waagrecht (kleiner = nach links)
- bottom:456,  // Unterkante des Logos ohne Feenstaub (kleiner = weiter nach oben)
- w:176,       // Breite des Logos (ohne Feenstaub), die Höhe passt sich an
- alpha:.24,   // Deckkraft: wie stark das Logo durch den Lack scheint
- dustAlpha:.00, // Deckkraft des Feenstaubs (weiss auf hellem Holz braucht mehr)
- brown:true,  // true = in Brauntönen (wie eingelegt ins Holz), false = Originalfarben
- diamond:false, // true = mit Raute, false = ohne
- pins:true    // true = mit Kugel und Pins, false = nur Schriftzug
-};
-/* Brauntöne von dunkel bis hell: Helligkeit des Logos wird auf diese Skala abgebildet */
-const LOGO_DARK=[160,110,58],LOGO_LIGHT=[255,236,200];
+/* Bahnlogo (Einstellungen in LANE_LOGO): wird einmal aus assets/logo.svg erzeugt */
 let laneLogo=null; // {img, x, y, w, h} in Bahn-Koordinaten
 (function loadLaneLogo(){
  const BIG=1600;
@@ -291,40 +325,44 @@ let laneLogo=null; // {img, x, y, w, h} in Bahn-Koordinaten
    const id=g.getImageData(0,0,c.width,c.height),d=id.data;
    for(let i=0;i<d.length;i+=4){
     const l=(d[i]*.3+d[i+1]*.59+d[i+2]*.11)/255;
-    for(let j=0;j<3;j++)d[i+j]=LOGO_DARK[j]+(LOGO_LIGHT[j]-LOGO_DARK[j])*l;
+    for(let j=0;j<3;j++)d[i+j]=LANE_LOGO.dark[j]+(LANE_LOGO.light[j]-LANE_LOGO.dark[j])*l;
    }
    g.putImageData(id,0,0);
   }
   laneLogo={img:c,w,h,x:LANE_LOGO.x-LANE_LOGO.w/2-(L.x0-F.x0)*k,y:LANE_LOGO.bottom-(L.y1-F.y0)*k};
+  laneBg=null; // Bahn mit Logo neu vorzeichnen
  }).catch(()=>{});
 })();
-function drawLaneLogo(){
- if(laneLogo)ctx.drawImage(laneLogo.img,laneLogo.x,laneLogo.y,laneLogo.w,laneLogo.h);
-}
 
-function drawLane(){
- ctx.clearRect(0,0,W,H);
- ctx.fillStyle='#0b0e1c';ctx.fillRect(0,0,W,H);
+/* Die Bahn selbst (Holz, Logo, Zielpfeile, Linien) bewegt sich nie: einmal in eine eigene Canvas vorzeichnen,
+   danach kostet sie pro Bild nur ein drawImage */
+let laneBg=null;
+function renderLaneBg(){
+ const c=document.createElement('canvas');c.width=W*dpr;c.height=H*dpr;
+ const g=c.getContext('2d');g.scale(dpr,dpr);
+ g.fillStyle='#0b0e1c';g.fillRect(0,0,W,H);
  /* Rinnen */
- ctx.fillStyle='#04050b';ctx.fillRect(42,0,22,H);ctx.fillRect(296,0,22,H);
+ g.fillStyle='#04050b';g.fillRect(42,0,22,H);g.fillRect(296,0,22,H);
  /* Holz mit Dielen */
- const g=ctx.createLinearGradient(0,0,0,H);
- g.addColorStop(0,'#a97639');g.addColorStop(.35,'#e2ad63');g.addColorStop(1,'#d19a52');
- ctx.fillStyle=g;ctx.fillRect(64,0,232,H);
- ctx.strokeStyle='rgba(60,30,0,.18)';ctx.lineWidth=1;
- for(let i=1;i<8;i++){ctx.beginPath();ctx.moveTo(64+i*29,0);ctx.lineTo(64+i*29,H);ctx.stroke()}
- drawLaneLogo();
+ const wood=g.createLinearGradient(0,0,0,H);
+ wood.addColorStop(0,'#a97639');wood.addColorStop(.35,'#e2ad63');wood.addColorStop(1,'#d19a52');
+ g.fillStyle=wood;g.fillRect(64,0,232,H);
+ g.strokeStyle='rgba(60,30,0,.18)';g.lineWidth=1;
+ for(let i=1;i<8;i++){g.beginPath();g.moveTo(64+i*29,0);g.lineTo(64+i*29,H);g.stroke()}
+ if(laneLogo)g.drawImage(laneLogo.img,laneLogo.x,laneLogo.y,laneLogo.w,laneLogo.h);
  /* Zielpfeile */
- ctx.fillStyle='rgba(90,45,10,.5)';
+ g.fillStyle='rgba(90,45,10,.5)';
  for(let i=0;i<7;i++){
   const x=64+(i+.5)*232/7,y=360-(3-Math.abs(i-3))*14;
-  ctx.beginPath();ctx.moveTo(x,y-10);ctx.lineTo(x-6,y+4);ctx.lineTo(x+6,y+4);ctx.fill();
+  g.beginPath();g.moveTo(x,y-10);g.lineTo(x-6,y+4);g.lineTo(x+6,y+4);g.fill();
  }
  /* Foul-Linie, Bahnrand, Grube hinter den Pins */
- ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillRect(64,H-78,232,2);
- ctx.fillStyle='#ff7a1a';ctx.fillRect(40,0,2,H);ctx.fillRect(318,0,2,H);
- ctx.fillStyle='#000';ctx.fillRect(64,0,232,12);
+ g.fillStyle='rgba(255,255,255,.55)';g.fillRect(64,H-78,232,2);
+ g.fillStyle='#ff7a1a';g.fillRect(40,0,2,H);g.fillRect(318,0,2,H);
+ g.fillStyle='#000';g.fillRect(64,0,232,12);
+ return c;
 }
+function drawLane(){ctx.drawImage(laneBg||(laneBg=renderLaneBg()),0,0,W,H)}
 
 function drawPin(p){
  const oy=p.oy||0;
@@ -453,18 +491,6 @@ function draw(){
    Phasen: rack (in der Mulde) → out (rollt auf der Bahn) → under (unterirdisch) → roll (aus der Haube) → rack
            beim Hinlegen zusätzlich: rack → pick (gezogen) bzw. drop (angeklickt: fällt und rollt) → held (liegt auf der Bahn) → out */
 
-const RET_X=340,RET_HOOD_Y=432,RET_RACK_Y=528;      // Mitte der Schiene, Haube, Mulde
-const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches;
-const UNDER_STEPS=REDUCED?40:50,ROLL_STEPS=REDUCED?1:55,PICK_STEPS=REDUCED?1:18;
-/* Kugel per Klick aus dem Rücklauf holen: anheben, rechts über die Bahn tragen und mit etwas Schwung
-   fallen lassen. Seitwärts wird sie ab dem Loslassen gleichmässig langsamer, bis sie an ihrem Platz steht;
-   dabei schlägt sie auf, hüpft zweimal nach (der erste Hüpfer trägt weiter) und rollt aus.
-   Dauer in Schritten (60 pro Sekunde). */
-const DROP_X=270;                  // hier wird sie über der Bahn losgelassen
-const DROP={lift:12,fall:12,hop1:18,hop2:12,roll:48}; // roll: Ausrollen nach dem zweiten Hüpfer
-const DROP_HOPS=[.5,.22];          // Höhe der zwei Nachhüpfer (1 = Fallhöhe)
-const DROP_SCALE=.45,DROP_SHADOW=10,DROP_RING=14; // Grösse in der Luft, Schattenversatz, Dauer eines Aufschlagrings
-const DROP_SHAKE=1.8;              // so stark wackelt der Boden beim ersten Aufschlag (Bahn-Einheiten), bei den Hüpfern weniger
 const ret={phase:'rack',t:0,y:RET_RACK_Y,a:0,due:false}; // due: Pinsetter setzt ab, Kugel darf kommen
 /* vom Pinsetter aufgerufen, wenn er die Pins absetzt */
 function returnBall(){ret.due=true}
@@ -499,11 +525,12 @@ function dropBall(t){
 }
 /* Kugel aus der Mulde (oder von dort, wo sie gezogen wurde) an ihren Platz auf der Bahn legen */
 function placeBall(x,from){
- spotX=Math.max(SPOT_MIN,Math.min(SPOT_MAX,x));
+ setSpot(x);
  ret.phase=from||REDUCED?'pick':'drop';ret.t=0;ret.fx=from?from.x:RET_X;ret.fy=from?from.y:RET_RACK_Y;
 }
 const inRack=p=>ret.phase==='rack'&&Math.hypot(p.x-RET_X,p.y-RET_RACK_Y)<GRAB;
-
+/* Kugel liegt auf der Bahn oder ist auf dem Weg dorthin */
+const ballPlaced=()=>ret.phase==='held'||ret.phase==='pick'||ret.phase==='drop';
 
 function drawReturn(){
  ctx.save();
@@ -530,8 +557,11 @@ function drawReturn(){
 
 const STEP=1000/60;
 let acc=0,last=0;
+/* Bahn nicht zu sehen (weggescrollt, auf dem Handy nicht im Vollbild, Tab im Hintergrund): Spiel pausiert */
+let visible=true;
+if('IntersectionObserver' in window)new IntersectionObserver(es=>{visible=es[es.length-1].isIntersecting}).observe(canvas);
 function loop(ts){
- if(!document.hidden&&last){
+ if(visible&&!document.hidden&&last){
   acc+=Math.min(ts-last,250);
   let k=0;
   while(acc>=STEP&&k<15){step();acc-=STEP;k++}
@@ -552,25 +582,25 @@ function loop(ts){
    Gespielt wird mit Maus oder Touch, eine Tastatursteuerung gibt es bewusst nicht. */
 
 const powerFill=$('pf'),powerValue=$('pv');
-/* Im Balken: beim Ziehen das Tempo. Ob geworfen werden kann, zeigt die Kugel (zurück aus dem Rücklauf). */
-let meterText='';
+/* Im Balken: beim Ziehen das Tempo, erst wenn wirklich aufgezogen wird (wie beim Loslassen: genug weit nach vorne).
+   Ob geworfen werden kann, zeigt die Kugel (zurück aus dem Rücklauf). Nur bei Änderungen ins DOM schreiben. */
+let meterP=-1;
 const updateMeter=()=>{
- /* km/h erst, wenn wirklich aufgezogen wird (wie beim Loslassen: genug weit nach vorne) */
- const p=pushLevel();
- const text=p?Math.round((5+8*p)*2.8)+' km/h':'';
+ const p=pushLevel();if(p===meterP)return;meterP=p;
  powerFill.style.width=p*100+'%';
- if(text!==meterText)powerValue.textContent=meterText=text;
+ powerValue.textContent=p?Math.round(speed(p)*KMH)+' km/h':'';
 };
+/* Wucht 0–1 → Tempo der Kugel */
+const speed=p=>TUNING.speedMin+(TUNING.speedMax-TUNING.speedMin)*p;
 /* nach Spielende: erster Klick/Tipp schliesst die Meldung und startet ein neues Spiel, wirft aber nicht */
-const restart=()=>{newGame();toast.classList.remove('on');hideOverlays()};
+const restart=()=>{newGame();clearMessages()};
 
-const BALL_Y=P.BALL_START_Y,SPOT_MIN=84,SPOT_MAX=276,GRAB=30; // GRAB: Trefferzone um die Kugel (Bahn-Einheiten)
 let push=null;    // {sx,sy,x,y,t,phase} solange gezogen wird (Bahn-Koordinaten)
 let spotX=MID;    // Startposition der Kugel
 let moving=null;  // {dx} solange die Kugel auf der Bahn verschoben wird
 let grabbed=null; // {x,y,moved} solange die Kugel aus dem Rücklauf geholt wird
 let lastBallTap=0;
-const setSpot=x=>{spotX=Math.max(SPOT_MIN,Math.min(SPOT_MAX,x))};
+const setSpot=x=>{spotX=clamp(x,SPOT_MIN,SPOT_MAX)};
 const onBall=p=>ret.phase==='held'&&Math.hypot(p.x-spotX,p.y-BALL_Y)<GRAB;
 const toLane=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H}};
 /* Kugel liegt bereit, solange geworfen werden kann */
@@ -595,12 +625,12 @@ function pushShot(){
  const t=(performance.now()-push.t)/1000+push.phase;
  const wob=TUNING.pushWobble*p*p*(Math.sin(t*5.3)+.6*Math.sin(t*8.9+1.7))/1.6;
  const tx=spotX+fx/fy*(BALL_Y-HEAD_Y)*TUNING.pushAim+wob;
- return {p,tx:Math.max(28,Math.min(332,tx))};
+ return {p,tx:clamp(tx,TARGET_MIN,TARGET_MAX)};
 }
 const pushLevel=()=>{const s=push&&pushShot();return s?s.p:0};
 function pushRelease(){
  const s=pushShot();push=null;
- if(s)throwBall(s.tx,5+8*s.p,spotX);
+ if(s)throwBall(s.tx,speed(s.p));
 }
 /* ---------- Spielanleitung (Info-Knopf) ----------
    Klick oder Tipp öffnet und schliesst, mit der Maus öffnet auch Darüberfahren.
@@ -610,7 +640,7 @@ let howtoPinned=false; // per Klick geöffnet (bleibt offen, bis man schliesst)
 function setHowto(open,pinned){
  howto.classList.toggle('open',open);infoBtn.setAttribute('aria-expanded',String(open));howtoPinned=open&&pinned;
 }
-if(infoBtn&&howto&&howto.querySelectorAll){
+if(infoBtn&&howto){
  infoBtn.addEventListener('click',()=>setHowto(!howtoPinned,true));
  infoBtn.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&!howtoPinned)setHowto(true,false)});
  infoBtn.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&!howtoPinned)setHowto(false,false)});
@@ -630,7 +660,7 @@ if(infoBtn&&howto&&howto.querySelectorAll){
    const io=new IntersectionObserver(es=>{
     if(!es.some(x=>x.isIntersecting))return;
     io.disconnect();
-    setTimeout(()=>setHowto(true,true),6000);
+    setTimeout(()=>setHowto(true,true),HOWTO_DELAY_MS);
     try{localStorage.setItem('hg-anleitung','1')}catch(_){}
    },{threshold:.6});
    io.observe(canvas);
@@ -641,36 +671,33 @@ if(infoBtn&&howto&&howto.querySelectorAll){
 canvas.addEventListener('pointerdown',e=>{
  /* Kugel holen und auf der Bahn verschieben geht schon, während der Pinsetter noch arbeitet;
     werfen erst, wenn alles bereit ist */
- const p=toLane(e),busy=state!==READY;
+ const p=toLane(e),busy=state!==READY,hintOpen=hintTimer>0;
  if(busy&&!inRack(p)&&!onBall(p))return;
  e.preventDefault();
  if(!busy&&gameOver){restart();return}
  try{canvas.setPointerCapture(e.pointerId)}catch(_){}
- if(!busy){toast.classList.remove('on');hideOverlays()}
- {
-  /* Kugel holen und platzieren */
-  if(inRack(p)){grabbed={x:p.x,y:p.y,sx:p.x,sy:p.y,moved:false};return}
-  if(ret.phase!=='held'&&ret.phase!=='pick'&&ret.phase!=='drop'){
-   /* steht der Hinweis noch: Klick schliesst ihn nur, statt den nächsten Spruch zu zeigen */
-   if(hintTimer){hintClose();return}
-   hintToast('Kugel',say('keinekugel')||'Zuerst die Kugel aus dem Rücklauf rechts holen.');
-   return;
-  }
-  if(onBall(p)){
-   /* Doppeltipp: zurück in die Mitte */
-   if(performance.now()-lastBallTap<350){setSpot(MID);lastBallTap=0;return}
-   lastBallTap=performance.now();
-   moving={dx:p.x-spotX};return;
-  }
-  /* sonst: Zug zum Werfen beginnen */
-  push={sx:p.x,sy:p.y,x:p.x,y:p.y,t:performance.now(),phase:Math.random()*100};
+ if(!busy)clearMessages();
+ /* Kugel aus dem Rücklauf holen */
+ if(inRack(p)){grabbed={x:p.x,y:p.y,sx:p.x,sy:p.y,moved:false};return}
+ /* noch keine Kugel auf der Bahn: Spruch als Hinweis. Stand er noch, hat der Klick ihn nur geschlossen */
+ if(!ballPlaced()){
+  if(!hintOpen)hint('Kugel',say('keinekugel')||'Zuerst die Kugel aus dem Rücklauf rechts holen.');
+  return;
  }
+ if(onBall(p)){
+  /* Doppeltipp: zurück in die Mitte */
+  if(performance.now()-lastBallTap<DOUBLE_TAP_MS){setSpot(MID);lastBallTap=0;return}
+  lastBallTap=performance.now();
+  moving={dx:p.x-spotX};return;
+ }
+ /* sonst: Zug zum Werfen beginnen */
+ push={sx:p.x,sy:p.y,x:p.x,y:p.y,t:performance.now(),phase:Math.random()*100};
 });
 canvas.addEventListener('pointermove',e=>{
  if(push)Object.assign(push,toLane(e));
  else if(grabbed){
   const p=toLane(e);grabbed.x=p.x;grabbed.y=p.y;
-  if(Math.hypot(p.x-grabbed.sx,p.y-grabbed.sy)>6)grabbed.moved=true;
+  if(Math.hypot(p.x-grabbed.sx,p.y-grabbed.sy)>GRAB_MOVE)grabbed.moved=true;
  }
  else if(moving)setSpot(toLane(e).x-moving.dx);
  else if(e.pointerType==='mouse'){const p=toLane(e);canvas.style.cursor=onBall(p)||inRack(p)?'grab':''}

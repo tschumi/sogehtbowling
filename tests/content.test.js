@@ -92,3 +92,12 @@ describe('Bewertung am Spielende',()=>{
   for(let s=0;s<=300;s++)assert.notEqual(R.rating(W,s),'',`keine Bewertung für ${s} Punkte`);
  });
 });
+
+describe('Team',()=>{
+ test('Kugelfarben sind drei Hex-Farben (sonst nimmt die Seite die Standardfarben)',()=>{
+  for(const m of content.team||[])if(m.kugel!==undefined){
+   assert.ok(Array.isArray(m.kugel)&&m.kugel.length===3,`${m.name}: "kugel" braucht drei Farben`);
+   for(const c of m.kugel)assert.match(c,/^#[0-9a-f]{3,8}$/i,`${m.name}: "${c}" ist keine Hex-Farbe wie #ff7a1a`);
+  }
+ });
+});

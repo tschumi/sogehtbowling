@@ -104,8 +104,7 @@ canvas{display:block;width:100%;height:auto;border-radius:8px;cursor:crosshair;t
 @keyframes powout{from{opacity:1;transform:translate(-50%,-50%) rotate(var(--r)) scale(1)}to{opacity:0;transform:translate(-50%,-52%) rotate(var(--r)) scale(.97)}}
 .lw.shake{animation:shk .22s linear}
 @keyframes shk{0%,100%{transform:none}20%{transform:translate(-5px,3px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-3px,-2px)}80%{transform:translate(3px,2px)}}
-.toast.low{top:82%}.toast.low b{display:none}
-.toast{position:absolute;left:50%;top:50%;width:64%;transform:translate(-50%,-50%) scale(.8);text-align:center;background:rgba(11,14,28,.9);border:2px solid var(--acc);border-radius:14px;padding:12px 14px;pointer-events:none;opacity:0;transition:opacity .25s,transform .25s;color:var(--cream)}.toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}.toast.wait{pointer-events:auto;cursor:pointer}.toast b{display:block;font:400 1.5rem/1.1 "Bowlby One","Arial Black",sans-serif;color:var(--acc)}.toast span{display:block;font-size:.9rem;margin-top:6px}
+.toast{position:absolute;left:50%;top:50%;width:64%;transform:translate(-50%,-50%) scale(.8);text-align:center;background:rgba(11,14,28,.9);border:2px solid var(--acc);border-radius:14px;padding:12px 14px;pointer-events:none;opacity:0;transition:opacity .25s,transform .25s;color:var(--cream)}.toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}.toast b{display:block;font:400 1.5rem/1.1 "Bowlby One","Arial Black",sans-serif;color:var(--acc)}.toast span{display:block;font-size:.9rem;margin-top:6px}
 button{font:700 1rem "Space Grotesk",sans-serif;background:var(--acc);color:#1b1206;border:0;border-radius:999px;padding:10px 22px;cursor:pointer}
 button:disabled{opacity:.45;cursor:default}
 .playwrap,.xbtn{display:none}

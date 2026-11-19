@@ -25,7 +25,7 @@ Das Spiel zählt nach den offiziellen Regeln: 10 Frames, Strike = 10 plus die n�
 Fast alles, was sich ändert, steht in **`content.json`**. HTML oder JavaScript müssen dafür nicht angefasst werden.
 
 - **Nächstes Turnier:** `turnier.datum` (Format `JJJJ-MM-TTTHH:MM:SS`, z.B. `2027-03-13T10:00:00`) steuert den Countdown, `turnier.text` ist der Satz darüber.
-- **Team:** Ein Eintrag pro Person mit `name`, `rolle`, `text` und den drei Farben der Kugel (`kugel`: hell, mittel, dunkel).
+- **Team:** Ein Eintrag pro Person mit `name`, `rolle`, `text` und den drei Farben der Kugel (`kugel`: hell, mittel, dunkel, als Hex-Farben wie `#ff7a1a`).
 - **Geschichte:** `zahlen` sind die vier Kennzahlen. In `eintraege` steht die Turnierliste, das neueste Turnier zuoberst. Ein neues Turnier oben einfügen:
   ```json
   {"rang": 5, "liga": "Europa League", "datum": "Samstag, 20. März 2027", "turnier_nr": 21, "witz": "Euer Spruch."},
@@ -53,6 +53,9 @@ Alle Werte für das Spielgefühl stehen oben in **`js/physics.js`** im Block `TU
 - `pushLen`: wie weit man für volle Wucht nach vorne ziehen muss.
 - `pushAim`: wie stark seitliches Ziehen die Richtung ändert (kleiner = verzeihender).
 - `pushWobble`: wie stark der Pfeil bei viel Wucht zittert.
+- `speedMin` / `speedMax`: Tempo der Kugel bei wenig bzw. voller Wucht.
+
+Ablauf und Grafik (Zeiten der Meldungen, Pinsetter, Kugelrücklauf, Bahnlogo) lassen sich im Abschnitt **Einstellungen** am Anfang von `js/game.js` verstellen.
 
 Nach einer Änderung `node --test` laufen lassen: `tests/physics.test.js` wirft ein paar tausend simulierte Kugeln und meldet die aktuelle Strike-Quote. Er schlägt fehl, wenn das Spiel deutlich zu leicht oder zu schwer wird oder die Tasche sich nicht mehr lohnt.
 
@@ -79,6 +82,7 @@ node --test
 - `tests/rules.test.js`: Zählung (ganze Spiele inkl. 300 und Sonderfälle im 10. Frame), Frame-Ablauf, Wahl der Spruchgruppe, Spruchauswahl, Bewertung
 - `tests/physics.test.js`: Aufstellung, Rinnenwurf, gleicher Zufall ergibt gleichen Wurf, und eine Simulation der Spielbarkeit (Strike-Quote in der Tasche zwischen 25 und 55 %, Tasche besser als die Mitte)
 - `tests/content.test.js`: prüft `content.json` auf typische Bearbeitungsfehler (fehlende oder falsch geschriebene Gruppen, leere oder doppelte Sprüche, `{rest}` an falscher Stelle, „Strike!“ am Anfang, „ß“, Lücken in `endwertung`). Die Meldungen nennen Gruppe und Spruch.
+- `tests/csp.test.js`: prüft die Sicherheitsregeln (Content-Security-Policy) in `index.html`. Wer das kleine Skript im Kopf von `index.html` ändert, muss dessen Hash in der CSP nachführen; der Test nennt den neuen Wert.
 - `tests/layout.test.js`: öffnet die Vorschau in Chrome im Hintergrund und schlägt fehl, wenn ein Spruch nicht in seine Einblendung passt. Speichert dabei ein Bild aller Einblendungen unter `tests/vorschau.png` (nicht im Repository). Ohne Chrome wird dieser Test übersprungen, ein anderer Pfad geht mit `CHROME_PATH=/pfad/zu/chrome node --test`.
 
 Am besten vor jedem Veröffentlichen laufen lassen, vor allem nach Änderungen an `content.json`.
@@ -95,6 +99,10 @@ Jede gespeicherte Änderung (auch direkt im Browser auf github.com, z.B. an `con
 ## Vorschau beim Teilen
 
 Wird der Link auf Social Media oder in Messengern geteilt, erscheint `assets/og.png` als Vorschaubild, dazu Titel und Beschreibung aus den `og:`-Angaben im Kopf von `index.html`. Ein neues Bild muss 1200 × 630 Pixel gross sein, das Wichtigste gehört in die Mitte (manche Apps schneiden quadratisch zu). Nach dem Austauschen die Zahl in `og.png?v=…` hochzählen, sonst zeigen Facebook, LinkedIn und Co. noch lange das alte Bild. Prüfen lässt sich die Vorschau z.B. mit [opengraph.xyz](https://www.opengraph.xyz).
+
+## Sicherheit
+
+Die Seite lädt nichts von fremden Servern. Eine Content-Security-Policy im Kopf von `index.html` erzwingt das: Skripte, Schriften, Bilder und Daten nur von der eigenen Adresse. Neue externe Quellen (z.B. ein Zählpixel oder eine Schrift von Google) funktionieren darum erst, wenn sie dort eingetragen sind. Texte aus `content.json` werden vor dem Einfügen in die Seite maskiert.
 
 ## Schriften
 

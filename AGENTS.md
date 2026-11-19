@@ -26,7 +26,7 @@ Website des Fun-Bowlingteams **Hoppi Galoppi Solutions** (sogehtbowling.ch) mit 
 
 `rules.js`, `comics.js` und `physics.js` sind UMD-Module: im Browser globale Objekte, in Node per `require`.
 
-`game.js` ist in Abschnitte mit `/* ========== … ========== */` gegliedert: Spielzustand, Pinsetter, Ablauf, Zeichnen (inkl. Bahnlogo), Kugelrücklauf, Hauptschleife, Eingabe, Start.
+`game.js` ist in Abschnitte mit `/* ========== … ========== */` gegliedert: Einstellungen, Spielzustand, Partikel, Einblendungen, Pinsetter, Ablauf, Zeichnen (inkl. Bahnlogo), Kugelrücklauf, Hauptschleife, Eingabe, Start.
 
 ### Spielablauf in Kürze
 
@@ -51,7 +51,9 @@ node --test                   # alle Tests (Node ab 18, keine Pakete)
 - **Sprache:** Texte auf der Seite, Kommentare und Doku auf Deutsch in **Schweizer Schreibweise** („ss“, nie „ß“). Der Test `content.test.js` prüft das für `content.json`.
 - **Code-Stil:** bestehenden Stil beibehalten: kompakt, Einrückung mit einem Leerzeichen, kurze Namen, deutsche Kommentare mit `/* … */`. Keine Formatter laufen lassen, die ganze Dateien umformatieren.
 - **Spielgefühl:** Alle Werte für Schwierigkeit, Physik und Eingabe (Ziehen, Zittern) stehen in `TUNING` in `js/physics.js`, jeder mit Kommentar. Neue Stellschrauben dort ergänzen, nicht als Magic Numbers in `game.js`. Kleine Änderungen haben grosse Wirkung (`pinImpulse` ±0.01 ist spürbar). `tests/physics.test.js` meldet die Strike-Quote, auch für Würfe von der Seite (Winkelbonus `angleCarry`).
-- **Grafik-Einstellungen** (Bahnlogo, Rücklauf-Positionen und -Tempo) stehen als benannte Konstanten in `game.js` beim jeweiligen Abschnitt.
+- **Ablauf- und Grafik-Einstellungen** (Zeiten der Meldungen, Pinsetter, Rücklauf, Fallen der Kugel, Bahnlogo, Eingabe-Toleranzen) stehen als benannte Konstanten mit Kommentar im Abschnitt *Einstellungen* am Anfang von `game.js`. Neue dort ergänzen, keine Magic Numbers im übrigen Code.
+- **Sicherheit:** `index.html` hat eine Content-Security-Policy (nur `'self'`, Inline-Skript per Hash). Inline-Skript ändern → Hash nachführen (`tests/csp.test.js` nennt ihn). Inhalte aus `content.json` nur maskiert (`esc`) oder per `textContent` einfügen.
+- **Effizienz:** Die Bahn (Holz, Logo, Pfeile) wird einmal vorgezeichnet (`renderLaneBg`). Das Spiel pausiert, solange die Bahn nicht zu sehen ist.
 - **Physik und Regeln ohne DOM:** `physics.js` und `rules.js` dürfen nicht auf `window`, `document` oder Canvas zugreifen. Zufall läuft über den übergebenen `rand`, damit die Simulation deterministisch testbar bleibt.
 - **Inhalte:** Sprüche und Texte gehören in `content.json`, nicht in den Code. Regeln für Sprüche (Töpfe `any`/`schnell`/`sanft`, `{rest}` nur ab zwei Pins, kein „Strike!“ am Anfang) stehen im README.
 - **Steuerung:** Geworfen wird durch **Schieben**: auf der Bahn drücken, nach vorne ziehen (seitlich = Richtung, Länge = Wucht), loslassen. Gespielt wird nur mit **Maus oder Touch**. Eine Tastatursteuerung für das Spiel gibt es bewusst nicht (die Bahn ist `role="img"`). Die übrige Seite (Navigation, Anleitung, Schliessen-Knöpfe) bleibt per Tastatur bedienbar.
