@@ -739,9 +739,9 @@ if(infoBtn&&howto){
 
 canvas.addEventListener('pointerdown',e=>{
  /* Kugel holen und auf der Bahn verschieben geht schon, während der Pinsetter noch arbeitet;
-    werfen erst, wenn alles bereit ist */
+    werfen erst, wenn alles bereit ist. Nach dem letzten Wurf nicht: erst kommt die Endwertung */
  const p=toLane(e),busy=state!==READY,hintOpen=hintTimer>0;
- if(busy&&!inRack(p)&&!onBall(p))return;
+ if(busy&&(gameOver||!inRack(p)&&!onBall(p)))return;
  e.preventDefault();
  if(!busy&&gameOver){restart();return}
  try{canvas.setPointerCapture(e.pointerId)}catch(_){}
@@ -769,7 +769,7 @@ canvas.addEventListener('pointermove',e=>{
   if(Math.hypot(p.x-grabbed.sx,p.y-grabbed.sy)>GRAB_MOVE)grabbed.moved=true;
  }
  else if(moving)setSpot(toLane(e).x-moving.dx);
- else if(e.pointerType==='mouse'){const p=toLane(e);canvas.style.cursor=onBall(p)||inRack(p)?'grab':''}
+ else if(e.pointerType==='mouse'){const p=toLane(e);canvas.style.cursor=!(gameOver&&state!==READY)&&(onBall(p)||inRack(p))?'grab':''}
 });
 canvas.addEventListener('pointerup',e=>{
  if(grabbed){
