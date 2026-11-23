@@ -58,7 +58,7 @@ Alle Werte für das Spielgefühl stehen oben in **`js/physics.js`** im Block `TU
 - `pushWobble`: wie stark der Pfeil bei viel Wucht zittert.
 - `speedMin` / `speedMax`: Tempo der Kugel bei wenig bzw. voller Wucht.
 
-Ablauf und Grafik (Zeiten der Meldungen, Pinsetter, Kugelrücklauf, Bahnlogo) lassen sich im Abschnitt **Einstellungen** am Anfang von `js/game.js` verstellen.
+Ablauf und Grafik (Zeiten der Meldungen, Pinsetter, umgefallene Pins, Kugelrücklauf, Bahnlogo) lassen sich im Abschnitt **Einstellungen** am Anfang von `js/game.js` verstellen.
 
 Nach einer Änderung `node --test` laufen lassen: `tests/physics.test.js` wirft ein paar tausend simulierte Kugeln und meldet die aktuelle Strike-Quote. Er schlägt fehl, wenn das Spiel deutlich zu leicht oder zu schwer wird oder die Tasche sich nicht mehr lohnt.
 

@@ -48,6 +48,10 @@ const TABLE_DOWN=44;                // Tisch unten: Pins abgesetzt
 const TABLE_UP=TABLE_DOWN-HEAD_Y-30;// Tisch oben: ganz ausserhalb des Bildes
 const TABLE_SPEED=2.2,RAKE_SPEED=6; // Tempo von Tisch und Rechen pro Schritt
 
+/* Umgefallene Pins (nur Grafik, die Physik bleibt unberührt) */
+const FALL_MIN=1.25;                // gefallene Pins liegen mindestens so schräg (Bogenmass, ≈ 72°), sonst sähen sie stehend aus
+const FALL_STEPS=REDUCED?1:12;      // in so vielen Schritten kippen sie auf diese Schräge
+
 /* Kugelrücklauf rechts neben der Bahn */
 const RET_X=340,RET_HOOD_Y=432,RET_RACK_Y=528; // Mitte der Schiene, Haube, Mulde
 const UNDER_STEPS=REDUCED?40:50;    // unterirdisch unterwegs (mindestens)
@@ -264,6 +268,7 @@ function step(){
  tick++;
  moveReturn();
  lane.step(!!rake);
+ if(reset!==RESET_RUNNING)tipPins(); // abgeräumte stehende Pins nicht umkippen
  moveParticles();
  if(state===ROLLING&&!lane.ball){
   settle=lane.moving()?0:settle+1;
@@ -433,6 +438,19 @@ function renderLaneBg(){
 }
 function drawLane(){ctx.drawImage(laneBg||(laneBg=renderLaneBg()),0,0,W,H)}
 
+/* Gefallene Pins sichtbar hinlegen: Die gezeichnete Lage (p.r + p.tilt) bleibt mindestens FALL_MIN von der
+   Senkrechten weg. Frisch gefallen kippt der Pin in Stossrichtung, später in Drehrichtung weiter. */
+function tipPins(){
+ lane.pins.forEach(p=>{
+  if(!p.d)return;
+  const t=p.tilt||0,a=Math.atan2(Math.sin(p.r+t),Math.cos(p.r+t));
+  if(Math.abs(a)>=FALL_MIN){p.td=0;return}
+  if(!p.td)p.td=p.tilt===undefined?(p.vx<0?-1:1):Math.abs(p.vr)>.02?Math.sign(p.vr):(a<0?-1:1);
+  const rest=p.td*a>=0?FALL_MIN-Math.abs(a):FALL_MIN+Math.abs(a);
+  p.tilt=t+p.td*Math.min(FALL_MIN/FALL_STEPS,rest);
+ });
+}
+
 function drawPin(p){
  const oy=p.oy||0;
  /* Schatten, solange der Pin angehoben ist */
@@ -448,7 +466,7 @@ function drawPin(p){
  }else{
   ctx.translate(p.x,p.y+oy);const sc=1+Math.max(0,-oy)/380;ctx.scale(sc,sc);
  }
- ctx.rotate(p.r+(p.wob?Math.sin(tick*.8)*p.wob*.5:0));
+ ctx.rotate(p.r+(p.tilt||0)+(p.wob?Math.sin(tick*.8)*p.wob*.5:0));
  ctx.scale(PZ,PZ);
  ctx.globalAlpha=(rake&&p.y<14)?Math.max(0,(p.y+10)/24):1;
  ctx.fillStyle='#f7f2e6';
