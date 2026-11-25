@@ -24,7 +24,7 @@ function findChrome(){
 }
 
 /* Minimaler Webserver für den Projektordner (fetch auf content.json braucht http://) */
-const TYPES={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.json':'application/json','.ttf':'font/ttf','.svg':'image/svg+xml','.png':'image/png'};
+const TYPES={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.json':'application/json','.woff2':'font/woff2','.svg':'image/svg+xml','.png':'image/png'};
 function serve(){
  return new Promise(res=>{
   const srv=http.createServer((req,rsp)=>{

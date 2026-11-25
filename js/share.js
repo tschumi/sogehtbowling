@@ -13,8 +13,8 @@ const STAR_BLEED=60;                 // Zacken, Speedlines und Sternchen ragen s
 const C={bg:'#0b0e1c',acc:'#ff7a1a',cream:'#f7f2e6',dim:'#a9b0cf',line:'#2e365c',sheet:'#11162b'};
 /* Schriften relativ zu diesem Skript (js/…), damit es auch aus Unterordnern wie tests/ klappt */
 const BASE=document.currentScript?new URL('../',document.currentScript.src).href:'';
-const FONTS=[['Bowlby One','assets/fonts/BowlbyOne-Regular.ttf','400'],
- ['Space Grotesk','assets/fonts/SpaceGrotesk-VariableFont_wght.ttf','300 700']];
+const FONTS=[['Bowlby One','assets/fonts/BowlbyOne-Regular.woff2','400'],
+ ['Space Grotesk','assets/fonts/SpaceGrotesk-VariableFont_wght.woff2','300 700']];
 /* wie .pow text in styles.css; Animationen aus, damit alles im Endzustand steht */
 const STAR_CSS='text{font:400 46px "Bowlby One","Arial Black",sans-serif;text-anchor:middle;stroke-linejoin:round;paint-order:stroke}*{animation:none!important}';
 
@@ -23,7 +23,7 @@ let fontCss=null;
 function embedFonts(){
  if(!fontCss)fontCss=Promise.all(FONTS.map(([name,url,w])=>fetch(BASE+url).then(r=>r.blob()).then(b=>new Promise((ok,fail)=>{
   const fr=new FileReader();
-  fr.onload=()=>ok('@font-face{font-family:"'+name+'";src:url('+fr.result+') format("truetype");font-weight:'+w+'}');
+  fr.onload=()=>ok('@font-face{font-family:"'+name+'";src:url('+fr.result+') format("woff2");font-weight:'+w+'}');
   fr.onerror=fail;fr.readAsDataURL(b);
  })))).then(a=>a.join('')).catch(()=>{fontCss=null;return ''});
  return fontCss;
