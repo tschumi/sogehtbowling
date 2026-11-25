@@ -144,11 +144,17 @@ update();
 })();
 
 /* ---------- Spiel im Vollbild (Handy) ----------
-   „Zur Bowlingbahn“ öffnet, × oder Escape schliesst. Der Fokus springt jeweils auf den Gegenknopf. */
+   „Zur Bowlingbahn“ öffnet, × oder Escape schliesst. Der Fokus springt jeweils auf den Gegenknopf.
+   Solange das Spiel die Seite überdeckt, ist alles dahinter inert (per Tab nicht erreichbar).
+   Wird das Fenster breiter als 820 px, liegt die Bahn wieder in der Seite: dann nichts sperren. */
 (()=>{
 const playBtn=document.querySelector('.playbtn'),closeBtn=document.querySelector('.xbtn');
 if(!playBtn||!closeBtn)return;
-const setPlay=on=>{document.body.classList.toggle('play',on);(on?closeBtn:playBtn).focus()};
+const mobile=matchMedia('(max-width:820px)'),
+ behind=document.querySelectorAll('body>header,.hg>.lc,.hero>.scroll,main>section:not(.hero),body>footer');
+const lock=()=>{const on=mobile.matches&&document.body.classList.contains('play');behind.forEach(el=>el.inert=on)};
+const setPlay=on=>{document.body.classList.toggle('play',on);lock();(on?closeBtn:playBtn).focus()};
+mobile.addEventListener('change',lock);
 playBtn.addEventListener('click',()=>setPlay(true));
 closeBtn.addEventListener('click',()=>setPlay(false));
 addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('play'))setPlay(false)});
